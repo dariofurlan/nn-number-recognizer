@@ -1,4 +1,4 @@
-import './style.css';
+import './style.scss';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-document.write("oppelelà");
 console.log("Oplà");

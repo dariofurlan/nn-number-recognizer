@@ -13,6 +13,7 @@ module.exports = merge(common, {
     devServer: {
         contentBase: path.join(__dirname, 'dist'),
         compress: true,
+        host: '0.0.0.0',
         port: 8000
     },
     output: {
@@ -29,8 +30,11 @@ module.exports = merge(common, {
     ],
     module: {
         rules: [{
-            test: /\.css/,
-            use: ['style-loader', 'css-loader'],
+            test: /\.scss/,
+            use: ['style-loader', 'css-loader', 'sass-loader'],
+        }, {
+            test: /\.css$/,
+            use: ['style-loader', 'css-loader']
         }],
     },
 });
