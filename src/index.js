@@ -1,33 +1,53 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './style.scss';
 import $ from 'jquery';
+import {NN} from './nn';
+import {Drawer} from './drawer';
 
+// REFS
 const half_left = $('#half-left');
 const half_right = $('#half-right');
 const canvas = $('#paint')[0];
 const ctx = canvas.getContext("2d");
-let width = half_left.width();
-let height = half_left.height();
-let cw = width;
-let ch = width;
-ctx.canvas.width = cw;
-ctx.canvas.height = ch;
+
+// CONSTANTS
+const WIDTH = half_left.width();
+const HEIGHT = half_left.height();
+const CTX_WIDTH = WIDTH;
+const CTX_HEIGHT = WIDTH;
+const N_SQUARES = 20;
+
+console.log(WIDTH + "-" + CTX_WIDTH);
+
+//todo next two lines need to be responsive
+canvas.width = CTX_WIDTH;
+canvas.height = CTX_HEIGHT;
+
+const nn = new NN(N_SQUARES);
+nn.on('update', (data) => {
+    //redraw
+});
+const X = nn.getX();
 
 function draw_canvas_grid() {
-    let incr = width / 32;
-    for (let i=0;i<=width;i+=incr) {
-        // verticali
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, ch);
-        ctx.stroke();
+    const incrx = CTX_WIDTH / N_SQUARES;
+    const incry = CTX_HEIGHT / N_SQUARES;
+    ctx.font = ".7em Arial";
 
-        //orizzontali
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(cw, i);
-        ctx.stroke();
+    let a = 0;
+    for (let y = 0; y < CTX_HEIGHT; y += incrx) {
+        for (let x = 0; x < CTX_WIDTH; x += incrx) {
+            ctx.fillText(X[a], x, y + incry, incrx);
+            ctx.strokeRect(x, y, incrx, incry);
+            a++;
+        }
     }
 }
+
+function smaller() {
+
+}
+
+export {smaller};
 
 draw_canvas_grid();
