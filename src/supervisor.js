@@ -60,6 +60,9 @@ function init() {
         draw(e);
     };
     canvas.onmousemove = (e) => {
+        if (!drawer.isDrawing) {
+            return;
+        }
         draw(e);
     };
     canvas.addEventListener('mousedown', function (e) {
