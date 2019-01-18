@@ -10,14 +10,14 @@ ctx.fillStyle = 'black';
 ctx.fillRect(10,10,20,20);
 
 // CONSTANTS
-const N_SQUARES = 64;
+const N_SQUARES = 16;
 let bound_canvas = canvas.getBoundingClientRect();
 
 
 const nn = new NN(N_SQUARES);
 const drawer = new Drawer(canvas, N_SQUARES, nn.out);
-nn.on('update', (data) => {
-
+nn.on('update', () => {
+    drawer.drawGrid();
 });
 
 
@@ -51,13 +51,12 @@ function init() {
 }
 
 function reduce() {
-    drawer.reduceGride()
+    nn.reduce();
 }
 
 function reset() {
     // TODO actually do something serious, and better
-    drawer.n_squares = drawer.MAX_N_SQUARES;
-    drawer.drawGrid();
+
 }
 
 export {

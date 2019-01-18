@@ -21,15 +21,21 @@ class Drawer {
         console.log("draw");
         this.ctx.clearRect(0, 0, this.w, this.h);
         let i = 0;
-        let ns = Math.sqrt(this.X.length); // reduce if necessary
+        let ns = Math.sqrt(this.X.length);
         let incrx = this.w / ns;
         let incry = this.h / ns;
-        for (let y = 0; y < this.w; y += incrx) {
-            for (let x = 0; x < this.h; x += incrx) {
-                //this.ctx.fillText(this.X[i], x, y + incry, incrx);
+        for (let y = 0; y < this.w; y += incrx, i--) {
+            for (let x = 0; x < this.h; x += incrx, i++) {
+
                 // to make a b/w color all rgb must be at the same value, all to zero means black, and 255 is white
-                this.ctx.strokeRect(x, y, incrx, incry);
-                i++;
+                let val = Math.round(this.X[i]*255).toString(16);
+                console.log(this.X[i]*255);
+                this.ctx.fillStyle = '#'+val+val+val;
+                console.log('#'+val+val+val);
+
+                //this.ctx.strokeText(Math.round(this.X[i]*100)/100, x, y + incry, incrx);
+                //this.ctx.strokeRect(x,y,incrx,incry);
+                this.ctx.fillRect(x, y, incrx, incry);
             }
         }
     }
