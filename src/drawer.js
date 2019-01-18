@@ -1,5 +1,3 @@
-import $ from "jquery";
-
 class Drawer {
     constructor(width, height, n_squares, X_ref) {
         this.w = width;
@@ -8,11 +6,31 @@ class Drawer {
         this.MIN_N_SQUARES = 8;
         this.n_squares = n_squares;
         this.state = {};
-        this.canvas = $('#paint')[0];
+        this.X = X_ref;
+        let isDrawing = false;
+
+        this.canvas = document.getElementById('paint');
+        this.ctx = this.canvas.getContext("2d");
         this.canvas.width = this.w;
         this.canvas.height = this.h;
-        this.ctx = this.canvas.getContext("2d");
-        this.X = X_ref;
+
+
+        this.canvas.addEventListener('mousemove', function (e) {
+            if (!isDrawing) {
+                return;
+            }
+            let x = e.pageX - this.offsetLeft;
+            let y = e.pageY - this.offsetTop;
+            console.log(x+"-"+y);
+        });
+        this.canvas.addEventListener('mousedown', function (e) {
+            console.log("down");
+            isDrawing = true;
+        }.bind(this));
+        this.canvas.addEventListener('mouseup', function (e) {
+            console.log("up");
+            isDrawing = false;
+        }.bind(this));
     }
 
     animation_loop() {
@@ -21,11 +39,11 @@ class Drawer {
     }
 
     drawGrid() {
-        this.ctx.clearRect(0,0,this.w,this.h);
-        let i=0;
+        this.ctx.clearRect(0, 0, this.w, this.h);
+        let i = 0;
         let ns = this.n_squares; // reduce if necessary
-        let incrx = this.w/ns;
-        let incry = this.h/ns;
+        let incrx = this.w / ns;
+        let incry = this.h / ns;
         for (let y = 0; y < this.w; y += incrx) {
             for (let x = 0; x < this.h; x += incrx) {
                 this.ctx.fillText(this.X[i], x, y + incry, incrx);
@@ -44,7 +62,8 @@ class Drawer {
 
     reduceGride() {
         if (this.n_squares % 2 === 0 && this.n_squares / 2 > 4)
-            this.n_squares /= 2;console.log(this);
+            this.n_squares /= 2;
+        console.log(this);
         this.drawGrid();
     }
 }
