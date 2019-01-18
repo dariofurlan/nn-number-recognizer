@@ -5,17 +5,18 @@ import {Drawer} from './drawer';
 /* ----------------------------------REFS--------------------------------- */
 const paint_box = $('#paint-box');
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-ctx.fillStyle = 'black';
-ctx.fillRect(10,10,20,20);
-
-// CONSTANTS
-const N_SQUARES = 16;
-let bound_canvas = canvas.getBoundingClientRect();
+const edge_size_input = document.getElementById('edge');
 
 
-const nn = new NN(N_SQUARES);
-const drawer = new Drawer(canvas, N_SQUARES, nn.out);
+/* -------------------------------CONSTANTS------------------------------- */
+const DEFAULT_N_SQUARES = 16;
+
+
+/* -------------------------------VARIABLES------------------------------- */
+let bound_canvas;
+let n_squares = DEFAULT_N_SQUARES;
+const nn = new NN(n_squares);
+const drawer = new Drawer(canvas, nn.out);
 nn.on('update', () => {
     drawer.drawGrid();
 });
@@ -25,24 +26,45 @@ nn.on('update', () => {
 init();
 /* -------------------------------FUNCTIONS------------------------------- */
 function init() {
-    window.onload = window.onresize = (e)=> {
-        console.log("resized");
-        bound_canvas = canvas.getBoundingClientRect();
-        drawer.updateCanvasSize(paint_box.width(),paint_box.width());
-        drawer.drawGrid();
-    };
-    canvas.addEventListener('mousemove', function (e) {
-        if (!drawer.isDrawing) {
-            return;
-        }
+    function draw(e) {
         let x = e.pageX - bound_canvas.left;
         let y = e.pageY - bound_canvas.top;
 
-        //console.log(x+"-"+y);
-    });
+        let pos = drawer.getPosition(x, y);
+        nn.out[pos] = 1;
+        nn.emit('update');
+    }
+
+    window.ontouchstart = (e) => {
+        console.log("touch started");
+        draw(e);
+        e.preventDefault();
+    };
+    window.ontouchmove = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        let touch = e.touches[0];
+        draw(new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        }));
+    };
+    window.onload = window.onresize = (e) => {
+        //console.log("resized");
+        bound_canvas = canvas.getBoundingClientRect();
+        drawer.updateCanvasSize(paint_box.width(), paint_box.width());
+        drawer.drawGrid();
+    };
+    canvas.onclick = (e) => {
+        draw(e);
+    };
+    canvas.onmousemove = (e) => {
+        draw(e);
+    };
     canvas.addEventListener('mousedown', function (e) {
         console.log("down");
-        drawer.isDrawing=true;
+        drawer.isDrawing = true;
     });
     canvas.addEventListener('mouseup', function (e) {
         console.log("up");
@@ -51,7 +73,8 @@ function init() {
 }
 
 function reduce() {
-    nn.reduce();
+    if (nn.out.length / 4 >= 64)
+        nn.reduce();
 }
 
 function reset() {

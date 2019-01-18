@@ -6,7 +6,6 @@ class NN extends EventEmitter {
         this.X = [];
         this.X.length = size * size;
         this.X.fill(0);
-        this.init();
         this.out = this.X.slice(0);
     }
 
@@ -43,20 +42,18 @@ class NN extends EventEmitter {
         let edge_size = Math.sqrt(this.out.length);
 
         let newOut = [];
-        newOut.length = this.out.length / convs_size;
+        newOut.length = this.out.length / (convs_size*convs_size);
         let new_edege_size = Math.sqrt(newOut.length);
 
         for (let y = 0; y < edge_size; y += convs_size) {
             for (let x = 0; x < edge_size; x += convs_size) {
                 // do the avg of 4 pixels and then assign it to newOut
                 let avg = convolute(convs_size, edge_size, x, y);
-
-                let new_pos = y * new_edege_size + x;
-                this.out[new_pos] = avg;
+                let new_pos = (y) * new_edege_size + x;
+                this.out[new_pos/2] = avg;
             }
         }
         this.out.length = newOut.length;
-        console.log(this.out.length);
         this.update();
     }
 

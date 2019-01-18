@@ -1,8 +1,5 @@
 class Drawer {
-    constructor(canvas, n_squares, X_ref) {
-        this.MAX_N_SQUARES = n_squares;
-        this.MIN_N_SQUARES = 8;
-        this.n_squares = n_squares;
+    constructor(canvas, X_ref) {
         this.X = X_ref;
         this.isDrawing = false;
         this.canvas = canvas;
@@ -11,40 +8,52 @@ class Drawer {
     }
 
     updateCanvasSize (width, height) {
+        width = Math.round(width);
+        height = Math.round(height);
         this.w = width;
         this.h = height;
+        console.log(width+":"+height);
         this.canvas.width = width;
         this.canvas.height = height;
     }
 
+    getPosition(x,y) {
+        let ns = Math.sqrt(this.X.length);
+        let gapy = Math.floor(this.h / ns);
+        let gapx = Math.floor(this.w / ns);
+        y = Math.floor(y/gapy);
+        x = Math.floor(x/gapx);
+        return y*ns+x;
+    }
+
     drawGrid() {
-        console.log("draw");
         this.ctx.clearRect(0, 0, this.w, this.h);
         let i = 0;
         let ns = Math.sqrt(this.X.length);
-        let incrx = this.w / ns;
-        let incry = this.h / ns;
-        for (let y = 0; y < this.w; y += incrx, i--) {
-            for (let x = 0; x < this.h; x += incrx, i++) {
+
+        let gapy = this.h / ns;
+        let gapx = this.w / ns;
+
+        for (let y = 0; y < this.h; y += gapy) {
+            for (let x = 0; x < this.w; x += gapx, i++) {
 
                 // to make a b/w color all rgb must be at the same value, all to zero means black, and 255 is white
                 let val = Math.round(this.X[i]*255).toString(16);
-                console.log(this.X[i]*255);
-                this.ctx.fillStyle = '#'+val+val+val;
-                console.log('#'+val+val+val);
+                let neg = Math.round(255-this.X[i]*255).toString(16);
+                let style = '#'+val+val+val;
+                let neg_style = '#'+neg+neg+neg;
 
-                //this.ctx.strokeText(Math.round(this.X[i]*100)/100, x, y + incry, incrx);
-                //this.ctx.strokeRect(x,y,incrx,incry);
-                this.ctx.fillRect(x, y, incrx, incry);
+                this.ctx.fillStyle = neg_style;
+                this.ctx.fillStyle = neg_style;
+                this.ctx.fillRect(x, y, gapx, gapy);
+
+                this.ctx.fillStyle = style;
+                this.ctx.strokeStyle = style;
+
+                this.ctx.strokeRect(x,y,gapx,gapy);
+                //this.ctx.fillText(Math.round(this.X[i]*100)/100, x, y + incry, incrx);
             }
         }
-    }
-
-    reduceGride() {
-        // todo only temp method
-        if (this.n_squares % 2 === 0 && this.n_squares / 2 > 4)
-            this.n_squares /= 2;
-        this.drawGrid();
     }
 }
 
