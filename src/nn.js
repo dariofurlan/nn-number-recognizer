@@ -4,8 +4,8 @@ class NN extends EventEmitter {
     constructor(size) {
         super();
         this.size = size;
-        this.callbacks = [];
         this.X = [];
+        this.out = this.X.slice(0);
         this.init();
     }
 
@@ -18,8 +18,16 @@ class NN extends EventEmitter {
         }
     }
 
-    getX() {
-        return this.X;
+    /**
+     * get the square convoluted n times
+     * @param n
+     */
+    reduce(n) {
+        
+    }
+
+    getOut() {
+        return this.out;
     }
 
     update() {
