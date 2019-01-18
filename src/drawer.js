@@ -20,7 +20,8 @@ class Drawer {
                 return;
             }
             let x = e.pageX - this.offsetLeft;
-            let y = e.pageY - this.offsetTop;
+            let y = e.pageY - 40;
+            console.log(this.offsetTop);
             console.log(x+"-"+y);
         });
         this.canvas.addEventListener('mousedown', function (e) {
