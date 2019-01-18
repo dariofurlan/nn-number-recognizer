@@ -15,7 +15,7 @@ let bound_canvas = canvas.getBoundingClientRect();
 
 
 const nn = new NN(N_SQUARES);
-const drawer = new Drawer(canvas, N_SQUARES, nn.X);
+const drawer = new Drawer(canvas, N_SQUARES, nn.out);
 nn.on('update', (data) => {
 
 });
