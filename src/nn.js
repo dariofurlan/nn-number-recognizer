@@ -1,31 +1,77 @@
 const EventEmitter = require('events');
-const Mathjs = require('mathjs');
+const math = require('mathjs');
 
 class NeuralNetwork {
     constructor(options) {
-        this.input_size = options.input_size;
-        this.hidden_size = options.hidden_size;
-        this.output_size = 10;
+        this.inputLayerSize = options.inputLayerSize;
+        this.hiddenLayerSize = options.hiddenLayerSize; // I don't know what is the best value
+        this.outputLayerSize = 10;
 
-
+        this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
+            return row.map(() => {
+                return Math.random();
+            });
+        });
+        this.W2 = math.randomInt([this.hiddenLayerSize, this.outputLayerSize]).map((row) => {
+            return row.map(() => {
+                return Math.random();
+            });
+        });
     }
 
     static relu(x) {
         return x > 0 ? x : 0;
     }
 
-    static sigmoid(x) {
-        return 1 / (1 + Math.pow(Math.E, -x));
+    static sigmoid(z) {
+        let bottom = math.add(1, math.exp(math.multiply(-1, z)));
+        return math.dotDivide(1, bottom);
     }
 
-    forward(X, Y) {
+    static sigmoidPrime(z) {
+        let top = math.exp(math.multiply(-1, z));
+        let bottom = math.add(1, top);
+        return math.dotDivide(top, bottom);
+    }
+
+    forward(X) {
+        this.Z2 = math.multiply(X, this.W1);
+        this.A2 = NeuralNetwork.sigmoid(this.Z2);
+        this.Z3 = math.multiply(this.A2, this.W2);
+        let y_hat = NeuralNetwork.sigmoid(this.Z3);
+        return y_hat;
+    }
+
+    costFunction(X, y) {
+        this.y_hat = this.forward(X);
+        let error_diff = math.substract(y, this.y_hat);
+        let error_squared = math.square(error_diff);
+        if (error_squared.constructor !== Array) {
+            error_squared = error_squared._data;
+        }
+        let summed = squared.reduce((a, v) => {
+            return math.add(a, b);
+        });
+
+        let J = math.multiply(0.5, summed);
+        return J;
+    }
+
+    costFunctionPrime(X, y) {
+        this.y_hat = this.forward(X);
+    }
+
+    train(X, Y) {
 
     }
+
 
     backward() {
 
     }
 }
+
+let NN = new NeuralNetwork({inputLayerSize: 64, hiddenLayerSize: 25});
 
 class Brain extends EventEmitter {
     constructor(size) {
@@ -89,6 +135,7 @@ class Brain extends EventEmitter {
     }
 }
 
+/*
 export {
     Brain
-};
+};*/

@@ -4,7 +4,7 @@ import $ from 'jquery';
 import './supervisor';
 import {reduce, reset} from "./supervisor";
 
-//bottoni
+// bottoni
 
 const btn1 = $('#btn1');
 const btn2 = $('#btn2');
