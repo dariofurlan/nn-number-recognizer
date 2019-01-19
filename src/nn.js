@@ -1,6 +1,33 @@
 const EventEmitter = require('events');
+const Mathjs = require('mathjs');
 
-class NN extends EventEmitter {
+class NeuralNetwork {
+    constructor(options) {
+        this.input_size = options.input_size;
+        this.hidden_size = options.hidden_size;
+        this.output_size = 10;
+
+
+    }
+
+    static relu(x) {
+        return x > 0 ? x : 0;
+    }
+
+    static sigmoid(x) {
+        return 1 / (1 + Math.pow(Math.E, -x));
+    }
+
+    forward(X, Y) {
+
+    }
+
+    backward() {
+
+    }
+}
+
+class Brain extends EventEmitter {
     constructor(size) {
         super();
         this.X = [];
@@ -14,7 +41,7 @@ class NN extends EventEmitter {
         for (let y = 0; y < edge_size; y++) {
             for (let x = 0; x < edge_size; x++) {
                 let position = y * edge_size + x;
-                this.X[position] = x/(edge_size-1);
+                this.X[position] = x / (edge_size - 1);
             }
         }
         console.log(this.X);
@@ -32,7 +59,7 @@ class NN extends EventEmitter {
             let K = [];
             for (let ky = 0, kn = 0; ky < conv_size; ky++) {
                 for (let kx = 0; kx < conv_size; kx++, kn++) {
-                    K[kn] = this.out[pos+ ky*edge_size + kx];
+                    K[kn] = this.out[pos + ky * edge_size + kx];
                 }
             }
             return average(K);
@@ -42,7 +69,7 @@ class NN extends EventEmitter {
         let edge_size = Math.sqrt(this.out.length);
 
         let newOut = [];
-        newOut.length = this.out.length / (convs_size*convs_size);
+        newOut.length = this.out.length / (convs_size * convs_size);
         let new_edege_size = Math.sqrt(newOut.length);
 
         for (let y = 0; y < edge_size; y += convs_size) {
@@ -50,7 +77,7 @@ class NN extends EventEmitter {
                 // do the avg of 4 pixels and then assign it to newOut
                 let avg = convolute(convs_size, edge_size, x, y);
                 let new_pos = (y) * new_edege_size + x;
-                this.out[new_pos/2] = avg;
+                this.out[new_pos / 2] = avg;
             }
         }
         this.out.length = newOut.length;
@@ -63,5 +90,5 @@ class NN extends EventEmitter {
 }
 
 export {
-    NN
+    Brain
 };

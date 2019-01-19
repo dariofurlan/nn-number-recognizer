@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {NN} from './nn';
+import {Brain} from './nn';
 import {Drawer} from './drawer';
 
 /* ----------------------------------REFS--------------------------------- */
@@ -24,7 +24,7 @@ const DEFAULT_N_SQUARES = 16;
 /* -------------------------------VARIABLES------------------------------- */
 let bound_canvas;
 let n_squares = DEFAULT_N_SQUARES;
-const nn = new NN(n_squares);
+const nn = new Brain(n_squares);
 const drawer = new Drawer(canvas, nn.out);
 
 
@@ -78,7 +78,6 @@ function init() {
     window.ontouchmove = (e) => {
         e.preventDefault();
         e.stopPropagation();
-
         let touch = e.touches[0];
         draw(new MouseEvent("mousemove", {
             clientX: touch.clientX,
@@ -88,7 +87,10 @@ function init() {
     window.onload = window.onresize = (e) => {
         //console.log("resized");
         bound_canvas = canvas.getBoundingClientRect();
-        drawer.updateCanvasSize(paint_box.width(), paint_box.width());
+        let w = paint_box.width();
+        let h = paint_box.height();
+        let edge = w;
+        drawer.updateCanvasSize(edge,edge);
         drawer.drawGrid();
     };
     canvas.onclick = (e) => {
