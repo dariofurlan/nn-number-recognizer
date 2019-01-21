@@ -16,6 +16,7 @@ edge_size_input.onchange = (e) => {
     }
 };
 
+
 /* -------------------------------CONSTANTS------------------------------- */
 const DEFAULT_N_SQUARES = 16;
 
@@ -41,7 +42,6 @@ function init() {
         let ns = Math.sqrt(nn.out.length);
 
         nn.out[pos] = 1;
-        console.log(ns);
         if (pos > (ns-1)) {
             if (nn.out[pos-ns] === 0) {
                 nn.out[pos - ns] = .5;
@@ -63,7 +63,6 @@ function init() {
                 nn.out[pos+1] = .5;
             }
         }
-
 
         nn.emit('update');
     }

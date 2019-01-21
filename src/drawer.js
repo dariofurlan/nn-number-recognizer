@@ -4,7 +4,6 @@ class Drawer {
         this.isDrawing = false;
         this.canvas = canvas;
         this.ctx = this.canvas.getContext("2d");
-        this.ctx.strokeText("11111111111111",20,20);
     }
 
     updateCanvasSize (width, height) {
@@ -23,7 +22,14 @@ class Drawer {
         let gapx = Math.floor(this.w / ns);
         y = Math.floor(y/gapy);
         x = Math.floor(x/gapx);
-        return y*ns+x;
+
+        let pos = (y*ns)+x;
+        console.log(pos);
+        return pos;
+    }
+
+    draw(e) {
+
     }
 
     drawGrid() {

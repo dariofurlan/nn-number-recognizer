@@ -7,6 +7,8 @@ class NeuralNetwork {
         this.hiddenLayerSize = options.hiddenLayerSize; // I don't know what is the best value
         this.outputLayerSize = 10;
 
+        this.learning_rate = 5;
+
         this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
             return row.map(() => {
                 return Math.random();
@@ -43,8 +45,8 @@ class NeuralNetwork {
     }
 
     costFunction(X, y) {
-        this.y_hat = this.forward(X);
-        let error_diff = math.substract(y, this.y_hat);
+        let y_hat = this.forward(X);
+        let error_diff = math.substract(y, y_hat);
         let error_squared = math.square(error_diff);
         if (error_squared.constructor !== Array) {
             error_squared = error_squared._data;
@@ -58,7 +60,32 @@ class NeuralNetwork {
     }
 
     costFunctionPrime(X, y) {
-        this.y_hat = this.forward(X);
+        let y_hat = this.forward(X);
+        let sigprime = NeuralNetwork.sigmoidPrime(this.Z3);
+        let ymyhat = math.subtract(y, y_hat);
+        let left1 = math.multiply(-1, ymyhat);
+
+        let d3 = math.dotMultiply(left1, sigprime3);
+
+        let A2T = math.transpose(this.A2);
+
+        let dJdW2;
+        if (math.size(a2trans).length == 1 && math.size(delta3).length == 1) {
+            dJdW2 = math.dot(a2trans, delta3);
+        } else {
+            dJdW2 = math.multiply(a2trans, delta3);
+        }
+
+        let dJdW1;
+
+
+        return [dJdW1, dJdW2];
+    }
+
+    updateWeights(X, y) {
+        let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
+        this.W2 = math.subtract(this.W2, math.multiply(-this.learning_rate, dJdW2));
+        this.W1 = math.subtract(this.W1, math.multiply(-this.learning_rate, dJdW1));
     }
 
     train(X, Y) {
@@ -135,7 +162,7 @@ class Brain extends EventEmitter {
     }
 }
 
-/*
+
 export {
     Brain
-};*/
+};
