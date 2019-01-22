@@ -3,109 +3,56 @@ import {Trainer} from './trainer';
 import {Drawer} from './drawer';
 
 /* ----------------------------------REFS--------------------------------- */
-const paint_box = $('#paint-box');
+const parent = $('#paint-box');
 const canvas = document.getElementById('canvas');
 
 
 /* -------------------------------CONSTANTS------------------------------- */
-const DEFAULT_MAX_SQUARES = 64;
-const DEFAULT_MIN_SQUARES = 8;
+const DEFAULT_MAX_SQUARES = 16;
+const DEFAULT_MIN_SQUARES = 8; // 8=64 input, 16=256 input, ...
 
 
 /* -------------------------------VARIABLES------------------------------- */
-let bound_canvas;
 const nn = new Trainer(DEFAULT_MAX_SQUARES);
-const drawer = new Drawer(canvas, nn.out);
+const drawer = new Drawer(canvas, nn.X, parent);
 
 
 init_components();
 
 /* -------------------------------FUNCTIONS------------------------------- */
 function init_components() {
-    function draw(e) {
-        let x = e.pageX - bound_canvas.left;
-        let y = e.pageY - bound_canvas.top;
-
-        let pos = drawer.getPosition(x, y);
-        let ns = Math.sqrt(nn.out.length);
-
-            // todo standardize the "sfumato"
-        nn.out[pos] = 1;
-        if (pos > (ns - 1)) {
-            if (nn.out[pos - ns] === 0) {
-                nn.out[pos - ns] = .5;
-            }
-        }
-        if (pos < nn.out.length - (ns - 1)) {
-            if (nn.out[pos + ns] === 0) {
-                nn.out[pos + ns] = .5;
-            }
-        }
-        if (pos % ns !== 0) {
-            if (nn.out[pos - 1] === 0) {
-                nn.out[pos - 1] = .5;
-            }
-        }
-        if ((pos + 1) % ns !== 0) {
-            if (nn.out[pos + 1] === 0) {
-                nn.out[pos + 1] = .5;
-            }
-        }
-
-        nn.emit('update');
-    }
-
     nn.on('update', () => {
-        drawer.drawGrid();
+        drawer.redraw();
     });
-    window.ontouchstart = (e) => {
+    canvas.ontouchstart = (e) => {
         console.log("touch started");
-        draw(e);
+        drawer.draw_on_grid(e);
         e.preventDefault();
     };
-    window.ontouchmove = (e) => {
+    canvas.ontouchmove = (e) => {
         e.preventDefault();
         e.stopPropagation();
         let touch = e.touches[0];
-        draw(new MouseEvent("mousemove", {
+        drawer.mousedown = true;
+        drawer.draw_on_grid(new MouseEvent("mousemove", {
             clientX: touch.clientX,
             clientY: touch.clientY
         }));
-    };
-    window.onload = window.onresize = (e) => {
-        //console.log("resized");
-        bound_canvas = canvas.getBoundingClientRect();
-        let winh = window.innerHeight;
-        let winw = window.innerWidth;
 
-        let w = paint_box.width();
-        let h = paint_box.height();
-        let edge = w;
-        if (edge > winh*.9) // todo fix this
-            edge = winh*.9;
-        drawer.updateCanvasSize(edge, edge);
-        drawer.drawGrid();
+        //check that x and y are inside the canvas..
     };
-    canvas.onclick = (e) => {
-        draw(e);
-    };
-    canvas.onmousemove = (e) => {
-        if (!drawer.isDrawing) {
-            return;
-        }
-        draw(e);
-    };
-    canvas.onmousedown = (e) => {
-        drawer.isDrawing = true;
-    };
-    canvas.onmouseup = canvas.onmouseleave = (e) => {
-        drawer.isDrawing = false;
+
+    window.onload = window.onresize = (e) => {
+        drawer.updateCanvasSize();
     };
 }
 
 function step_by_step() {
-    const MIN_LIMIT = 16;
-    if (nn.out.length / 4 >= MIN_LIMIT * MIN_LIMIT)
+    //1, assegnare numero a caso
+    //2, enable drawer
+    // convolute X times
+    // give the prediction
+    if (nn.X.length / 4 >= DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
         nn.reduce(2);
 }
 

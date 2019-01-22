@@ -121,7 +121,8 @@ class Trainer extends EventEmitter {
         this.X = [];
         this.X.length = size * size;
         this.X.fill(0);
-        this.out = this.X.slice(0);
+
+        //TODO replace out with X, modify directly X and then pass it to the net...
     }
 
     init() {
@@ -147,16 +148,16 @@ class Trainer extends EventEmitter {
             let K = [];
             for (let ky = 0, kn = 0; ky < conv_size; ky++) {
                 for (let kx = 0; kx < conv_size; kx++, kn++) {
-                    K[kn] = this.out[pos + ky * edge_size + kx];
+                    K[kn] = this.X[pos + ky * edge_size + kx];
                 }
             }
             return average(K);
         };
 
-        let edge_size = Math.sqrt(this.out.length);
+        let edge_size = Math.sqrt(this.X.length);
 
         let newOut = [];
-        newOut.length = this.out.length / (conv_size * conv_size);
+        newOut.length = this.X.length / (conv_size * conv_size);
         let new_edege_size = Math.sqrt(newOut.length);
 
         for (let y = 0; y < edge_size; y += conv_size) {
@@ -164,10 +165,10 @@ class Trainer extends EventEmitter {
                 // do the avg of 4 pixels and then assign it to newOut
                 let avg = convolute(conv_size, edge_size, x, y);
                 let new_pos = (y) * new_edege_size + x;
-                this.out[new_pos / 2] = avg;
+                this.X[new_pos / 2] = avg;
             }
         }
-        this.out.length = newOut.length;
+        this.X.length = newOut.length;
         this.update();
     }
 
