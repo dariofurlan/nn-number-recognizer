@@ -1,6 +1,9 @@
 const EventEmitter = require('events');
 const math = require('mathjs');
 
+const DEFAULT_MAX_SQUARES = 64;
+const DEFAULT_MIN_SQUARES = 8;
+
 class NeuralNetwork {
     constructor(options) {
         this.inputLayerSize = options.inputLayerSize;

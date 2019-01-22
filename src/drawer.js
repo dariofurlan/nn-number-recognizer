@@ -16,7 +16,7 @@ class Drawer {
         this.canvas.height = height;
     }
 
-    getPosition(x,y, debug_out) {
+    getPosition(x,y) {
         let ns = Math.sqrt(this.X.length);
         let gapy = this.h / ns;
         let gapx = this.w / ns;

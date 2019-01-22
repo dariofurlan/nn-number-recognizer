@@ -2,12 +2,12 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './style.scss';
 import $ from 'jquery';
 import './supervisor';
-import {reduce, reset} from "./supervisor";
+import {step_by_step, skip} from "./supervisor";
 
 // bottoni
 
-const btn1 = $('#btn1');
-const btn2 = $('#btn2');
+const btn1 = $('#step-by-step');
+const btn2 = $('#skip');
 
-btn1.on('click', reduce);
-btn2.on('click', reset);
+btn1.on('click', step_by_step);
+btn2.on('click', skip);
