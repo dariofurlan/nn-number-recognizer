@@ -1,71 +1,58 @@
 import $ from 'jquery';
-import {Brain} from './nn';
+import {Trainer} from './nn';
 import {Drawer} from './drawer';
 
 /* ----------------------------------REFS--------------------------------- */
 const paint_box = $('#paint-box');
 const canvas = document.getElementById('canvas');
-const edge_size_input = document.getElementById('edge');
-
-edge_size_input.onchange = (e) => {
-    let v = edge_size_input.value;
-    if (Math.log2(v) % 1 === 0) {
-        console.log(v);
-        n_squares = v;
-        nn.update();
-    }
-};
-
+const debug_out = document.getElementById('debug');
 
 /* -------------------------------CONSTANTS------------------------------- */
-const DEFAULT_N_SQUARES = 16;
-
+const DEFAULT_N_SQUARES = 243;
 
 
 /* -------------------------------VARIABLES------------------------------- */
 let bound_canvas;
-let n_squares = DEFAULT_N_SQUARES;
-const nn = new Brain(n_squares);
+const nn = new Trainer(DEFAULT_N_SQUARES);
 const drawer = new Drawer(canvas, nn.out);
 
 
+init_components();
 
-init();
 /* -------------------------------FUNCTIONS------------------------------- */
-function init() {
+function init_components() {
     function draw(e) {
         let x = e.pageX - bound_canvas.left;
         let y = e.pageY - bound_canvas.top;
 
-        let pos = drawer.getPosition(x, y);
-
+        let pos = drawer.getPosition(x, y, debug_out);
         let ns = Math.sqrt(nn.out.length);
 
         nn.out[pos] = 1;
-        if (pos > (ns-1)) {
-            if (nn.out[pos-ns] === 0) {
+        if (pos > (ns - 1)) {
+            if (nn.out[pos - ns] === 0) {
                 nn.out[pos - ns] = .5;
             }
         }
-        if (pos < nn.out.length-(ns-1)) {
-            if (nn.out[pos+ns] === 0) {
-                nn.out[pos+ns] = .5;
+        if (pos < nn.out.length - (ns - 1)) {
+            if (nn.out[pos + ns] === 0) {
+                nn.out[pos + ns] = .5;
             }
         }
-        if (pos%ns!==0) {
-            if (nn.out[pos-1] === 0) {
-                nn.out[pos-1] = .5;
+        if (pos % ns !== 0) {
+            if (nn.out[pos - 1] === 0) {
+                nn.out[pos - 1] = .5;
             }
         }
-
-        if ((pos+1)%ns!==0) {
-            if (nn.out[pos+1] === 0) {
-                nn.out[pos+1] = .5;
+        if ((pos + 1) % ns !== 0) {
+            if (nn.out[pos + 1] === 0) {
+                nn.out[pos + 1] = .5;
             }
         }
 
         nn.emit('update');
     }
+
     nn.on('update', () => {
         drawer.drawGrid();
     });
@@ -89,7 +76,7 @@ function init() {
         let w = paint_box.width();
         let h = paint_box.height();
         let edge = w;
-        drawer.updateCanvasSize(edge,edge);
+        drawer.updateCanvasSize(edge, edge);
         drawer.drawGrid();
     };
     canvas.onclick = (e) => {
@@ -114,8 +101,8 @@ function init() {
 
 function reduce() {
     const MIN_LIMIT = 8;
-    if (nn.out.length / 4 >= MIN_LIMIT*MIN_LIMIT)
-        nn.reduce();
+    if (nn.out.length / 4 >= MIN_LIMIT * MIN_LIMIT)
+        nn.reduce(3);
 }
 
 function reset() {

@@ -46,7 +46,7 @@ class NeuralNetwork {
 
     costFunction(X, y) {
         let y_hat = this.forward(X);
-        let error_diff = math.substract(y, y_hat);
+        let error_diff = math.subtract(y, y_hat);
         let error_squared = math.square(error_diff);
         if (error_squared.constructor !== Array) {
             error_squared = error_squared._data;
@@ -61,46 +61,58 @@ class NeuralNetwork {
 
     costFunctionPrime(X, y) {
         let y_hat = this.forward(X);
-        let sigprime = NeuralNetwork.sigmoidPrime(this.Z3);
+        let sigprime3 = NeuralNetwork.sigmoidPrime(this.Z3);
         let ymyhat = math.subtract(y, y_hat);
         let left1 = math.multiply(-1, ymyhat);
 
-        let d3 = math.dotMultiply(left1, sigprime3);
+        let delta3 = math.dotMultiply(left1, sigprime3);
 
-        let A2T = math.transpose(this.A2);
+        let a2t = math.transpose(this.A2);
 
         let dJdW2;
-        if (math.size(a2trans).length == 1 && math.size(delta3).length == 1) {
-            dJdW2 = math.dot(a2trans, delta3);
+        if (math.size(a2t).length === 1 && math.size(delta3).length === 1) {
+            dJdW2 = math.dot(a2t, delta3);
         } else {
-            dJdW2 = math.multiply(a2trans, delta3);
+            dJdW2 = math.multiply(a2t, delta3);
         }
 
+        let sigprime2 = NeuralNetwork.sigmoidPrime(this.Z2);
+        let w2trans = math.transpose(this.W2);
+        let left2;
+        if (math.size(delta3).length === 1 && math.size(w2trans).length === 1) {
+            left2 = math.dot(delta3, w2trans);
+        } else {
+            left2 = math.multiply(delta3, w2trans);
+        }
+
+        let delta2 = math.dotMultiply(left2, sigprime2);
+
+        let xtrans = math.transpose(X);
+
         let dJdW1;
-
-
+        if (math.size(xtrans).length === 1 && math.size(delta2).length === 1) {
+            dJdW1 = math.dot(xtrans, delta2);
+        } else {
+            dJdW1 = math.multiply(xtrans, delta2);
+        }
         return [dJdW1, dJdW2];
     }
 
-    updateWeights(X, y) {
+    train(X, y) {
         let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
         this.W2 = math.subtract(this.W2, math.multiply(-this.learning_rate, dJdW2));
         this.W1 = math.subtract(this.W1, math.multiply(-this.learning_rate, dJdW1));
+        return this.test(X,y);
     }
 
-    train(X, Y) {
-
-    }
-
-
-    backward() {
-
+    test(X, y) {
+        let prediction = this.forward(X);
+        let error = this.costFunction(X, y);
+        return [prediction, error];
     }
 }
 
-let NN = new NeuralNetwork({inputLayerSize: 64, hiddenLayerSize: 25});
-
-class Brain extends EventEmitter {
+class Trainer extends EventEmitter {
     constructor(size) {
         super();
         this.X = [];
@@ -124,7 +136,7 @@ class Brain extends EventEmitter {
      * get the square convoluted n times
      * @param conv_size default:2
      */
-    reduce(conv_size) {
+    reduce(conv_size=2) {
         let average = (array) => array.reduce((a, b) => a + b) / array.length;
         let convolute = (conv_size, edge_size, x, y) => {
             // TODO for now do a simple average, later do with the kernel
@@ -138,17 +150,16 @@ class Brain extends EventEmitter {
             return average(K);
         };
 
-        let convs_size = 2;
         let edge_size = Math.sqrt(this.out.length);
 
         let newOut = [];
-        newOut.length = this.out.length / (convs_size * convs_size);
+        newOut.length = this.out.length / (conv_size * conv_size);
         let new_edege_size = Math.sqrt(newOut.length);
 
-        for (let y = 0; y < edge_size; y += convs_size) {
-            for (let x = 0; x < edge_size; x += convs_size) {
+        for (let y = 0; y < edge_size; y += conv_size) {
+            for (let x = 0; x < edge_size; x += conv_size) {
                 // do the avg of 4 pixels and then assign it to newOut
-                let avg = convolute(convs_size, edge_size, x, y);
+                let avg = convolute(conv_size, edge_size, x, y);
                 let new_pos = (y) * new_edege_size + x;
                 this.out[new_pos / 2] = avg;
             }
@@ -164,5 +175,5 @@ class Brain extends EventEmitter {
 
 
 export {
-    Brain
+    Trainer
 };

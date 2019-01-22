@@ -16,15 +16,17 @@ class Drawer {
         this.canvas.height = height;
     }
 
-    getPosition(x,y) {
+    getPosition(x,y, debug_out) {
         let ns = Math.sqrt(this.X.length);
-        let gapy = Math.floor(this.h / ns);
-        let gapx = Math.floor(this.w / ns);
+        let gapy = this.h / ns;
+        let gapx = this.w / ns;
         y = Math.floor(y/gapy);
         x = Math.floor(x/gapx);
 
         let pos = (y*ns)+x;
-        console.log(pos);
+
+        if (pos>this.X.length)
+            return this.X.length;
         return pos;
     }
 
