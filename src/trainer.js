@@ -4,10 +4,17 @@ const math = require('mathjs');
 const DEFAULT_MAX_SQUARES = 64;
 const DEFAULT_MIN_SQUARES = 8;
 
+//let a = math.dot([[1,2],[4,3]], [[1,2,3],[3,-4,7]]);     // returns number 15
+let b = math.multiply([[1,2],[4,3]], [[1,2,3],[3,-4,7]]); // returns number 15
+//console.log(a);
+console.log(b);
+
+
+
 class NeuralNetwork {
-    constructor(options) {
-        this.inputLayerSize = options.inputLayerSize;
-        this.hiddenLayerSize = options.hiddenLayerSize; // I don't know what is the best value
+    constructor(inputLayerSize) {
+        this.inputLayerSize = inputLayerSize;
+        this.hiddenLayerSize = 16; // I don't know what is the best value
         this.outputLayerSize = 10;
 
         this.learning_rate = 5;
@@ -17,6 +24,8 @@ class NeuralNetwork {
                 return Math.random();
             });
         });
+        console.log("w:");
+        console.log(this.W1);
         this.W2 = math.randomInt([this.hiddenLayerSize, this.outputLayerSize]).map((row) => {
             return row.map(() => {
                 return Math.random();
@@ -41,7 +50,9 @@ class NeuralNetwork {
 
     forward(X) {
         this.Z2 = math.multiply(X, this.W1);
+        console.log(this.Z2);
         this.A2 = NeuralNetwork.sigmoid(this.Z2);
+        console.log(this.A2);
         this.Z3 = math.multiply(this.A2, this.W2);
         let y_hat = NeuralNetwork.sigmoid(this.Z3);
         return y_hat;
@@ -54,7 +65,7 @@ class NeuralNetwork {
         if (error_squared.constructor !== Array) {
             error_squared = error_squared._data;
         }
-        let summed = squared.reduce((a, v) => {
+        let summed = error_squared.reduce((a, v) => {
             return math.add(a, b);
         });
 
@@ -103,6 +114,7 @@ class NeuralNetwork {
 
     train(X, y) {
         let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
+        console.log(dJdW1+"-"+dJdW2);
         this.W2 = math.subtract(this.W2, math.multiply(-this.learning_rate, dJdW2));
         this.W1 = math.subtract(this.W1, math.multiply(-this.learning_rate, dJdW1));
         return this.test(X,y);
@@ -121,19 +133,8 @@ class Trainer extends EventEmitter {
         this.X = [];
         this.X.length = size * size;
         this.X.fill(0);
-
+        this.nn = new NeuralNetwork(64);
         //TODO replace out with X, modify directly X and then pass it to the net...
-    }
-
-    init() {
-        let edge_size = Math.sqrt(this.X.length);
-        for (let y = 0; y < edge_size; y++) {
-            for (let x = 0; x < edge_size; x++) {
-                let position = y * edge_size + x;
-                this.X[position] = x / (edge_size - 1);
-            }
-        }
-        console.log(this.X);
     }
 
     /**
@@ -175,9 +176,25 @@ class Trainer extends EventEmitter {
     update() {
         this.emit('update');
     }
+
+    static get_random_y() {
+        let y = Math.floor(Math.random()*10);
+        return y;
+    }
+
+    train(y) {
+        let Y = [];
+        Y.length=10;
+        Y.fill(0);
+        Y[y] = 1;
+
+        let [prediction, error] = this.nn.train(this.X,Y);
+        console.log("expected = "+prediction);
+        console.log("error = "+error);
+    }
 }
 
-
+/*
 export {
     Trainer
-};
+};*/

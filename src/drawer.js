@@ -1,14 +1,16 @@
 class Drawer {
     constructor(canvas, X_ref, parent) {
         this.X = X_ref;
-        this.isDrawing = false;
         this.canvas = canvas;
         this.parent = parent;
         this.ctx = this.canvas.getContext("2d");
-        this.enabled = true;
         this.canvas.onmousedown = () => this.mousedown = true;
         this.canvas.onmousemove = (e) => this.draw_on_grid(e);
-        this.canvas.onclick = (e) => this.draw_on_grid(e);
+        this.canvas.onclick = (e) => {
+            this.mousedown = true;
+            this.draw_on_grid(e);
+            this.mousedown = false;
+        };
         this.canvas.onmouseup = () => this.mousedown = false;
         this.canvas.onmouseleave = () => this.mousedown = false;
     }
@@ -22,7 +24,7 @@ class Drawer {
         let pos = this.getPosition(x, y);
         let ns = Math.sqrt(this.X.length);
 
-        const OPACITY = .40;
+        const OPACITY = .6;
 
         this.X[pos] = 1;
 
@@ -87,15 +89,13 @@ class Drawer {
 
         for (let y = 0; y < this.h; y += gapy) {
             for (let x = 0; x < this.w; x += gapx, i++) {
-
-                // to make a b/w color all rgb must be at the same value, all to zero means black, and 255 is white
                 let val = Math.round(this.X[i] * 255).toString(16);
                 let neg = Math.round(255 - this.X[i] * 255).toString(16);
-                let style = '#' + val + val + val;
-                let neg_style = '#' + neg + neg + neg;
+                let style = '#' + val + val + val; //white
+                let neg_style = '#' + neg + neg + neg; //black
 
                 this.ctx.fillStyle = neg_style;
-                this.ctx.fillStyle = neg_style;
+                this.ctx.strokeStyle = neg_style;
                 this.ctx.fillRect(x, y, gapx, gapy);
 
                 this.ctx.fillStyle = style;

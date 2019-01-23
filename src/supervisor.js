@@ -5,6 +5,9 @@ import {Drawer} from './drawer';
 /* ----------------------------------REFS--------------------------------- */
 const parent = $('#paint-box');
 const canvas = document.getElementById('canvas');
+const msg_y = document.getElementById('msg-y');
+const btn1 = document.getElementById('next');
+const btn2 = document.getElementById('train');
 
 
 /* -------------------------------CONSTANTS------------------------------- */
@@ -13,15 +16,21 @@ const DEFAULT_MIN_SQUARES = 8; // 8=64 input, 16=256 input, ...
 
 
 /* -------------------------------VARIABLES------------------------------- */
-const nn = new Trainer(DEFAULT_MAX_SQUARES);
-const drawer = new Drawer(canvas, nn.X, parent);
+const trainer = new Trainer(DEFAULT_MAX_SQUARES);
+const drawer = new Drawer(canvas, trainer.X, parent);
 
 
 init_components();
 
 /* -------------------------------FUNCTIONS------------------------------- */
 function init_components() {
-    nn.on('update', () => {
+    btn1.onclick = (e) => {
+        next();
+    };
+    btn2.onclick = (e) => {
+        train();
+    };
+    trainer.on('update', () => {
         drawer.redraw();
     });
     canvas.ontouchstart = (e) => {
@@ -47,22 +56,27 @@ function init_components() {
     };
 }
 
-function step_by_step() {
-    //1, assegnare numero a caso
-    //2, enable drawer
-    // convolute X times
-    // give the prediction
-    if (nn.X.length / 4 >= DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
-        nn.reduce(2);
+let y;
+function next() {
+    y = Trainer.get_random_y();
+    msg_y.innerText = "Disegna il numero: "+y;
+    drawer.updateCanvasSize();
+    drawer.enabled = true;
+
+    btn1.disabled = true;
+    btn2.disabled = false;
 }
 
-function skip() {
+function train() {
+    drawer.enabled = false;
+    if (trainer.X.length / 4 >= DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
+        trainer.reduce(2);
 
-    // 1. ridurre
-    // 2. aspettare
-    // ripetere da 1 finchè
+    trainer.train(y);
+    btn2.disabled = true;
+    btn1.disabled = false;
 }
 
 export {
-    step_by_step, skip
+    next, train
 }
