@@ -33,8 +33,8 @@ class NeuralNetwork {
 
     static sigmoidPrime(z) {
         let sig = NeuralNetwork.sigmoid(z);
-        console.log("sig:"+sig);
-        return math.multiply(sig, math.add(1, math.multiply(-1, sig)));
+        return math.dotMultiply(sig, math.add(1, math.multiply(-1, sig)));
+        // error found here "dotMultiply" is correct, instead of "multiply" alone
     }
 
     forward(X) {
@@ -53,29 +53,14 @@ class NeuralNetwork {
 
     costFunctionPrime(X, y) {
         let y_hat = this.forward(X);
-        console.log(this.Z3);
-        console.log("sigprime3:");
         let sigprime3 = NeuralNetwork.sigmoidPrime(this.Z3);
-        console.log(sigprime3);
-
         let ymyhat = math.subtract(y, y_hat);
         let left1 = math.multiply(-1, ymyhat);
-        console.log("left1:");
-        console.log(left1);
-
-        let delta3 = math.dotMultiply(left1, sigprime3); //probelm
-
-        console.log(this.A2);
-        console.log(delta3);
-        process.exit(0);
-
-        let dJdW2 = math.multiply(math.transpose(this.A2),delta3); //ok
-
+        let delta3 = math.dotMultiply(left1, sigprime3);
+        let dJdW2 = math.multiply(math.transpose([this.A2]),[delta3]); // problem with the size
         let sigprime2 = NeuralNetwork.sigmoidPrime(this.Z2);
-
         let delta2 = math.multiply(math.multiply(delta3, math.transpose(this.W2)), sigprime2);
-
-        let dJdW1 = math.multiply(math.transpose(X), delta2);
+        let dJdW1 = math.multiply(math.transpose([X]), delta2);
         return [dJdW1, dJdW2];
     }
 
@@ -93,17 +78,10 @@ class NeuralNetwork {
         return [prediction, total_error];
     }
 }
-let o = [];
-for (let i=-8;i<=8;i++) {
-    let val = NeuralNetwork.sigmoidPrime([i,i]);
-    o[i] = val;
-    console.log(i+": "+val);
-}
-
-let nn = new NeuralNetwork(2, 3, 2);
-let [prediction, total_error] = nn.train([1, 2], [0, 1]);
+/*let nn = new NeuralNetwork(2, 3, 2);
+let [prediction, total_error] = nn.test([1, 2], [0, 1]);
 console.log("pred: "+prediction+" err: " + total_error);
-process.exit(0);
+process.exit(0);*/
 
 class Trainer extends EventEmitter {
     constructor(size) {
@@ -111,7 +89,7 @@ class Trainer extends EventEmitter {
         this.X = [];
         this.X.length = size * size;
         this.X.fill(0);
-        this.nn = new NeuralNetwork(64);
+        this.nn = new NeuralNetwork(64, 32,10);
         //TODO replace out with X, modify directly X and then pass it to the net...
     }
 
@@ -172,7 +150,7 @@ class Trainer extends EventEmitter {
     }
 }
 
-/*
+
 export {
     Trainer
-};*/
+};
