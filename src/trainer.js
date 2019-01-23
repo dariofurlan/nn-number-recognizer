@@ -4,18 +4,11 @@ const math = require('mathjs');
 const DEFAULT_MAX_SQUARES = 64;
 const DEFAULT_MIN_SQUARES = 8;
 
-//let a = math.dot([[1,2],[4,3]], [[1,2,3],[3,-4,7]]);     // returns number 15
-let b = math.multiply([[1,2],[4,3]], [[1,2,3],[3,-4,7]]); // returns number 15
-//console.log(a);
-console.log(b);
-
-
-
 class NeuralNetwork {
-    constructor(inputLayerSize) {
-        this.inputLayerSize = inputLayerSize;
-        this.hiddenLayerSize = 16; // I don't know what is the best value
-        this.outputLayerSize = 10;
+    constructor(input, hidden, output) {
+        this.inputLayerSize = input;
+        this.hiddenLayerSize = hidden; // I don't know what is the best value
+        this.outputLayerSize = output;
 
         this.learning_rate = 5;
 
@@ -24,17 +17,13 @@ class NeuralNetwork {
                 return Math.random();
             });
         });
-        console.log("w:");
-        console.log(this.W1);
+        //console.log(this.W1);
         this.W2 = math.randomInt([this.hiddenLayerSize, this.outputLayerSize]).map((row) => {
             return row.map(() => {
                 return Math.random();
             });
         });
-    }
-
-    static relu(x) {
-        return x > 0 ? x : 0;
+        //console.log(this.W2);
     }
 
     static sigmoid(z) {
@@ -43,16 +32,14 @@ class NeuralNetwork {
     }
 
     static sigmoidPrime(z) {
-        let top = math.exp(math.multiply(-1, z));
-        let bottom = math.add(1, top);
-        return math.dotDivide(top, bottom);
+        let sig = NeuralNetwork.sigmoid(z);
+        console.log("sig:"+sig);
+        return math.multiply(sig, math.add(1, math.multiply(-1, sig)));
     }
 
     forward(X) {
         this.Z2 = math.multiply(X, this.W1);
-        console.log(this.Z2);
         this.A2 = NeuralNetwork.sigmoid(this.Z2);
-        console.log(this.A2);
         this.Z3 = math.multiply(this.A2, this.W2);
         let y_hat = NeuralNetwork.sigmoid(this.Z3);
         return y_hat;
@@ -60,72 +47,63 @@ class NeuralNetwork {
 
     costFunction(X, y) {
         let y_hat = this.forward(X);
-        let error_diff = math.subtract(y, y_hat);
-        let error_squared = math.square(error_diff);
-        if (error_squared.constructor !== Array) {
-            error_squared = error_squared._data;
-        }
-        let summed = error_squared.reduce((a, v) => {
-            return math.add(a, b);
-        });
-
-        let J = math.multiply(0.5, summed);
+        let J = math.sum(math.multiply(0.5, math.square(math.subtract(y, y_hat))));
         return J;
     }
 
     costFunctionPrime(X, y) {
         let y_hat = this.forward(X);
+        console.log(this.Z3);
+        console.log("sigprime3:");
         let sigprime3 = NeuralNetwork.sigmoidPrime(this.Z3);
+        console.log(sigprime3);
+
         let ymyhat = math.subtract(y, y_hat);
         let left1 = math.multiply(-1, ymyhat);
+        console.log("left1:");
+        console.log(left1);
 
-        let delta3 = math.dotMultiply(left1, sigprime3);
+        let delta3 = math.dotMultiply(left1, sigprime3); //probelm
 
-        let a2t = math.transpose(this.A2);
+        console.log(this.A2);
+        console.log(delta3);
+        process.exit(0);
 
-        let dJdW2;
-        if (math.size(a2t).length === 1 && math.size(delta3).length === 1) {
-            dJdW2 = math.dot(a2t, delta3);
-        } else {
-            dJdW2 = math.multiply(a2t, delta3);
-        }
+        let dJdW2 = math.multiply(math.transpose(this.A2),delta3); //ok
 
         let sigprime2 = NeuralNetwork.sigmoidPrime(this.Z2);
-        let w2trans = math.transpose(this.W2);
-        let left2;
-        if (math.size(delta3).length === 1 && math.size(w2trans).length === 1) {
-            left2 = math.dot(delta3, w2trans);
-        } else {
-            left2 = math.multiply(delta3, w2trans);
-        }
 
-        let delta2 = math.dotMultiply(left2, sigprime2);
+        let delta2 = math.multiply(math.multiply(delta3, math.transpose(this.W2)), sigprime2);
 
-        let xtrans = math.transpose(X);
-
-        let dJdW1;
-        if (math.size(xtrans).length === 1 && math.size(delta2).length === 1) {
-            dJdW1 = math.dot(xtrans, delta2);
-        } else {
-            dJdW1 = math.multiply(xtrans, delta2);
-        }
+        let dJdW1 = math.multiply(math.transpose(X), delta2);
         return [dJdW1, dJdW2];
     }
 
     train(X, y) {
         let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
-        console.log(dJdW1+"-"+dJdW2);
+        console.log(dJdW1 + "-" + dJdW2);
         this.W2 = math.subtract(this.W2, math.multiply(-this.learning_rate, dJdW2));
         this.W1 = math.subtract(this.W1, math.multiply(-this.learning_rate, dJdW1));
-        return this.test(X,y);
+        return this.test(X, y);
     }
 
     test(X, y) {
         let prediction = this.forward(X);
-        let error = this.costFunction(X, y);
-        return [prediction, error];
+        let total_error = this.costFunction(X, y);
+        return [prediction, total_error];
     }
 }
+let o = [];
+for (let i=-8;i<=8;i++) {
+    let val = NeuralNetwork.sigmoidPrime([i,i]);
+    o[i] = val;
+    console.log(i+": "+val);
+}
+
+let nn = new NeuralNetwork(2, 3, 2);
+let [prediction, total_error] = nn.train([1, 2], [0, 1]);
+console.log("pred: "+prediction+" err: " + total_error);
+process.exit(0);
 
 class Trainer extends EventEmitter {
     constructor(size) {
@@ -141,7 +119,7 @@ class Trainer extends EventEmitter {
      * get the square convoluted n times
      * @param conv_size default:2
      */
-    reduce(conv_size=2) {
+    reduce(conv_size = 2) {
         let average = (array) => array.reduce((a, b) => a + b) / array.length;
         let convolute = (conv_size, edge_size, x, y) => {
             // TODO for now do a simple average, later do with the kernel
@@ -178,19 +156,19 @@ class Trainer extends EventEmitter {
     }
 
     static get_random_y() {
-        let y = Math.floor(Math.random()*10);
+        let y = Math.floor(Math.random() * 10);
         return y;
     }
 
     train(y) {
         let Y = [];
-        Y.length=10;
+        Y.length = 10;
         Y.fill(0);
         Y[y] = 1;
 
-        let [prediction, error] = this.nn.train(this.X,Y);
-        console.log("expected = "+prediction);
-        console.log("error = "+error);
+        let [prediction, error] = this.nn.train(this.X, Y);
+        console.log("expected = " + prediction);
+        console.log("error = " + error);
     }
 }
 
