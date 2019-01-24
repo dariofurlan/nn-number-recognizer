@@ -6,7 +6,7 @@ import {Drawer} from './drawer';
 const parent = $('#paint-box');
 const canvas = document.getElementById('canvas');
 const msg_y = document.getElementById('msg-y');
-const btn1 = document.getElementById('next');
+const btn1 = document.getElementById('new');
 const btn2 = document.getElementById('train');
 
 
@@ -25,7 +25,7 @@ init_components();
 /* -------------------------------FUNCTIONS------------------------------- */
 function init_components() {
     btn1.onclick = (e) => {
-        next();
+        new_draw();
     };
     btn2.onclick = (e) => {
         train();
@@ -57,7 +57,7 @@ function init_components() {
 }
 
 let y;
-function next() {
+function new_draw() {
     y = Trainer.get_random_y();
     msg_y.innerText = "Disegna il numero: "+y;
     drawer.updateCanvasSize();
@@ -73,10 +73,12 @@ function train() {
         trainer.reduce(2);
 
     trainer.train(y);
+
+
     btn2.disabled = true;
     btn1.disabled = false;
 }
 
 export {
-    next, train
+    new_draw, train
 }

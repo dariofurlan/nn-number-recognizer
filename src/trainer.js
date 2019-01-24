@@ -57,16 +57,20 @@ class NeuralNetwork {
         let ymyhat = math.subtract(y, y_hat);
         let left1 = math.multiply(-1, ymyhat);
         let delta3 = math.dotMultiply(left1, sigprime3);
-        let dJdW2 = math.multiply(math.transpose([this.A2]),[delta3]); // problem with the size
+        let dJdW2 = math.multiply(math.transpose(this.A2),delta3); // problem with the size
+        console.log(dJdW2);
+
         let sigprime2 = NeuralNetwork.sigmoidPrime(this.Z2);
-        let delta2 = math.multiply(math.multiply(delta3, math.transpose(this.W2)), sigprime2);
-        let dJdW1 = math.multiply(math.transpose([X]), delta2);
+        let delta2 = math.dotMultiply(math.multiply(delta3, math.transpose(this.W2)), sigprime2);
+        let dJdW1 = math.multiply(math.transpose(X), delta2);
+
+        console.log(dJdW1);
         return [dJdW1, dJdW2];
     }
 
     train(X, y) {
         let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
-        console.log(dJdW1 + "-" + dJdW2);
+        //console.log(dJdW1 + "-" + dJdW2);
         this.W2 = math.subtract(this.W2, math.multiply(-this.learning_rate, dJdW2));
         this.W1 = math.subtract(this.W1, math.multiply(-this.learning_rate, dJdW1));
         return this.test(X, y);
@@ -79,7 +83,7 @@ class NeuralNetwork {
     }
 }
 /*let nn = new NeuralNetwork(2, 3, 2);
-let [prediction, total_error] = nn.test([1, 2], [0, 1]);
+let [prediction, total_error] = nn.train([[1, 2]], [[0, 1]]);
 console.log("pred: "+prediction+" err: " + total_error);
 process.exit(0);*/
 
@@ -144,12 +148,32 @@ class Trainer extends EventEmitter {
         Y.fill(0);
         Y[y] = 1;
 
-        let [prediction, error] = this.nn.train(this.X, Y);
-        console.log("expected = " + prediction);
-        console.log("error = " + error);
+        let [prediction, error] = this.nn.train([this.X], [Y]);
+
+        // pass to other array
+
+        let pred = [];
+        for (let i=0;i<prediction[0].length;i++) {
+            pred[i] = {
+                "number":i,
+                "accuracy":prediction[0][i]
+            };
+        }
+
+        // sort the other array
+        for (let i=0;i<pred.length-1;i++)  {
+            for (let j=i+1;j<pred.length;j++) {
+                if (pred[i]["accuracy"]<pred[j]["accuracy"]) {
+                    let s = pred[i];
+                    pred[i] = pred[j];
+                    pred[j] = s;
+                }
+            }
+        }
+
+        return [pred, error];
     }
 }
-
 
 export {
     Trainer
