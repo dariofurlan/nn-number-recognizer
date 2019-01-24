@@ -48,6 +48,10 @@ class NeuralNetwork {
 
     costFunction(X, y) {
         let y_hat = this.forward(X);
+        /*console.log(y);
+        console.log(y_hat);
+        console.log(math.subtract(y, y_hat));*/
+
         let J = math.sum(math.multiply(0.5, math.square(math.subtract(y, y_hat))));
         return J;
     }
@@ -58,12 +62,9 @@ class NeuralNetwork {
         let ymyhat = math.subtract(y, y_hat);
         let left1 = math.multiply(-1, ymyhat);
         let delta3 = math.dotMultiply(left1, sigprime3);
-        let dJdW2 = math.multiply(math.transpose(this.A2),delta3); // problem with the size
-        console.log(dJdW2);
+        let dJdW2 = math.multiply(math.transpose(this.A2), delta3);
 
         let sigprime2 = NeuralNetwork.sigmoidPrime(this.Z2);
-        console.log(sigprime2);
-        console.log(delta3);
         let delta2 = math.dotMultiply(math.multiply(delta3, math.transpose(this.W2)), sigprime2);
         let dJdW1 = math.multiply(math.transpose(X), delta2);
 
@@ -75,27 +76,51 @@ class NeuralNetwork {
         let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
         this.W2 = math.subtract(this.W2, math.multiply(this.learning_rate, dJdW2));
         this.W1 = math.subtract(this.W1, math.multiply(this.learning_rate, dJdW1));
-        return this.test(X, y);
+        /*console.log(this.W1);
+        console.log(this.W2);*/
+        let error = this.costFunction(X, y);
+        return {
+            prediction: this.test(X, y),
+            error: error,
+        };
     }
 
-    test(X, y) {
+    test(X) {
         let prediction = this.forward(X);
-        let total_error = this.costFunction(X, y);
-        return [prediction, total_error];
+        return prediction;
     }
 }
-let nn = new NeuralNetwork(2, 3, 2);
-let [prediction, total_error] = nn.train([[1, 2]], [[0, 1]]);
-console.log("pred: "+prediction+" err: " + total_error);
+
+/*let nn = new NeuralNetwork(2, 3, 2);
+let X = [
+    [[1,0]],
+    [[0,1]]
+];
+for (let i=0;i<50;i++) {
+    console.log(i);
+    let [prediction, total_error] = nn.train(X[i%2], X[(i+1)%2]);
+    console.log("pred: " + prediction + " err: " + total_error);
+}
+console.log("");
+console.log("test: ");
+try {
+    let prediction = nn.test([[1, 0]])[0];
+    console.log(prediction);
+    prediction = nn.test([[0,1]])[0];
+    console.log(prediction);
+} catch (e) {
+    console.error(e);
+}
 process.exit(0);
+*/
+
 
 class Trainer extends EventEmitter {
     constructor() {
         super();
         this.X = [];
         this.size = DEFAULT_MAX_SQUARES;
-        this.X.length = this.size * this.size;
-        this.X.fill(0);
+        this.reset();
         this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 8, NUM_NUM);
         //TODO replace out with X, modify directly X and then pass it to the net...
     }
@@ -149,34 +174,34 @@ class Trainer extends EventEmitter {
     }
 
     train(y) {
+        console.log("X:"+this.X);
         let Y = [];
         Y.length = NUM_NUM;
         Y.fill(0);
         Y[y] = 1;
 
-        let [prediction, error] = this.nn.train([this.X], [Y]);
-
-        // pass to other array
+        let out = this.nn.train([this.X], [Y]);
+        let prediction = out.prediction[0];
+        let error = out.error;
 
         let pred = [];
-        for (let i=0;i<prediction[0].length;i++) {
+        for (let i = 0; i < prediction.length; i++) {
             pred[i] = {
-                number:i,
-                accuracy:prediction[0][i]
+                number: i,
+                accuracy: prediction[i]
             };
         }
 
         // sort the other array
-        for (let i=0;i<pred.length-1;i++)  {
-            for (let j=i+1;j<pred.length;j++) {
-                if (pred[i].accuracy<pred[j].accuracy) {
+        for (let i = 0; i < pred.length; i++) {
+            for (let j = i + 1; j < pred.length-1; j++) {
+                if (pred[i].accuracy < pred[j].accuracy) {
                     let s = pred[i];
                     pred[i] = pred[j];
                     pred[j] = s;
                 }
             }
         }
-
         return [pred, error];
     }
 
@@ -187,6 +212,6 @@ class Trainer extends EventEmitter {
     }
 }
 
-/*export {
+export {
     Trainer
-};*/
+};

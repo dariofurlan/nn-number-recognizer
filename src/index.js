@@ -31,6 +31,7 @@ function init_components() {
 
 
 function draw_loop() {
+    trainer.reset();
     let y = Trainer.get_random_y();
     msg_y.innerText = y;
     drawer.enabled = true;
@@ -43,6 +44,7 @@ function draw_loop() {
         timeout = setTimeout(step_1, TIME_TO_DRAW);
     });
     function step_1 () {
+        drawer.enabled =false;
         trainer.reduce(2);
         setTimeout(step_2, 250);
         function step_2() {
@@ -52,7 +54,6 @@ function draw_loop() {
                 msg_list.innerHTML += pred[i].number + ") " + pred[i].accuracy + "<br/>";
             }
             msg_list.innerHTML+="<br/>Errore: <b>"+error+"</b>";
-            trainer.reset();
             draw_loop();
         }
     }
