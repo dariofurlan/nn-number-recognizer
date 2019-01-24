@@ -121,7 +121,7 @@ class Trainer extends EventEmitter {
         this.X = [];
         this.size = DEFAULT_MAX_SQUARES;
         this.reset();
-        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 8, NUM_NUM);
+        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 20, NUM_NUM);
         //TODO replace out with X, modify directly X and then pass it to the net...
     }
 
@@ -193,8 +193,8 @@ class Trainer extends EventEmitter {
         }
 
         // sort the other array
-        for (let i = 0; i < pred.length; i++) {
-            for (let j = i + 1; j < pred.length-1; j++) {
+        for (let i = 0; i < pred.length-1; i++) {
+            for (let j = i + 1; j < pred.length; j++) {
                 if (pred[i].accuracy < pred[j].accuracy) {
                     let s = pred[i];
                     pred[i] = pred[j];

@@ -6,7 +6,8 @@ import {Trainer} from './trainer';
 import {Drawer} from './drawer';
 
 /* ----------------------------------REFS--------------------------------- */
-const parent = $('#paint-box');
+const parent = document.getElementById('paint-box');
+console.log(parent);
 const canvas = document.getElementById('canvas');
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
@@ -20,8 +21,11 @@ const trainer = new Trainer();
 const drawer = new Drawer(canvas, trainer.X, parent);
 
 
+let timeout = null;
+let y;
+
 init_components();
-draw_loop();
+step_0();
 /* -------------------------------FUNCTIONS------------------------------- */
 function init_components() {
     trainer.on('update', () => {
@@ -29,32 +33,35 @@ function init_components() {
     });
 }
 
-
-function draw_loop() {
-    trainer.reset();
-    let y = Trainer.get_random_y();
-    msg_y.innerText = y;
-    drawer.enabled = true;
-
-    let timeout = null;
-    drawer.on("drawing", () => {
-        if (timeout!=null) {
-            clearTimeout(timeout);
-        }
-        timeout = setTimeout(step_1, TIME_TO_DRAW);
-    });
-    function step_1 () {
-        drawer.enabled =false;
-        trainer.reduce(2);
-        setTimeout(step_2, 250);
-        function step_2() {
-            let [pred, error] = trainer.train(y);
-            msg_list.innerHTML = "";
-            for (let i = 0; i < pred.length; i++) {
-                msg_list.innerHTML += pred[i].number + ") " + pred[i].accuracy + "<br/>";
-            }
-            msg_list.innerHTML+="<br/>Errore: <b>"+error+"</b>";
-            draw_loop();
-        }
+drawer.on("drawing", () => {
+    if (!drawer.enabled)
+        return;
+    if (timeout!=null) {
+        clearTimeout(timeout);
     }
+    timeout = setTimeout(step_1, TIME_TO_DRAW);
+});
+function step_0() {
+    console.log("step_0");
+    trainer.reset();
+    y = Trainer.get_random_y();
+    msg_y.innerText = y;
+    timeout = null;
+    drawer.enabled = true;
+}
+function step_1 () {
+    console.log("step_1");
+    drawer.enabled =false;
+    trainer.reduce();
+    setTimeout(step_2, 250);
+}
+function step_2() {
+    console.log("step_2");
+    let [pred, error] = trainer.train(y);
+    msg_list.innerHTML = "";
+    for (let i = 0; i < pred.length; i++) {
+        msg_list.innerHTML += pred[i].number + ") " + pred[i].accuracy + "<br/>";
+    }
+    msg_list.innerHTML+="<br/>Errore: <b>"+error+"</b>";
+    setTimeout(step_0,0);
 }

@@ -1,10 +1,11 @@
 const EventEmitter = require('events');
 
-const OPACITY = .4;
+const OPACITY = .6;
 
 class Drawer extends EventEmitter {
     constructor(canvas, X_ref, parent) {
         super();
+        this.blur = true;
         this.X = X_ref;
         this.canvas = canvas;
         this.parent = parent;
@@ -41,27 +42,29 @@ class Drawer extends EventEmitter {
         let ns = Math.sqrt(this.X.length);
 
         this.X[pos] = 1;
+        if (this.blur) {
+            if (pos > (ns - 1)) {
+                if (this.X[pos - ns] === 0) {
+                    this.X[pos - ns] = OPACITY;
+                }
+            }
+            if (pos < this.X.length - (ns - 1)) {
+                if (this.X[pos + ns] === 0) {
+                    this.X[pos + ns] = OPACITY;
+                }
+            }
+            if (pos % ns !== 0) {
+                if (this.X[pos - 1] === 0) {
+                    this.X[pos - 1] = OPACITY;
+                }
+            }
+            if ((pos + 1) % ns !== 0) {
+                if (this.X[pos + 1] === 0) {
+                    this.X[pos + 1] = OPACITY;
+                }
+            }
+        }
 
-        if (pos > (ns - 1)) {
-            if (this.X[pos - ns] === 0) {
-                this.X[pos - ns] = OPACITY;
-            }
-        }
-        if (pos < this.X.length - (ns - 1)) {
-            if (this.X[pos + ns] === 0) {
-                this.X[pos + ns] = OPACITY;
-            }
-        }
-        if (pos % ns !== 0) {
-            if (this.X[pos - 1] === 0) {
-                this.X[pos - 1] = OPACITY;
-            }
-        }
-        if ((pos + 1) % ns !== 0) {
-            if (this.X[pos + 1] === 0) {
-                this.X[pos + 1] = OPACITY;
-            }
-        }
         this.emit("drawing");
         this.redraw();
     }
@@ -69,7 +72,7 @@ class Drawer extends EventEmitter {
     updateCanvasSize() {
         this.bound_canvas = this.canvas.getBoundingClientRect();
         let winh = window.innerHeight;
-        let edge = this.parent.width();
+        let edge = this.parent.offsetWidth;
         if (edge > winh * .9) // todo fix this
             edge = winh * .9;
         edge = Math.round(edge);
