@@ -91,29 +91,6 @@ class NeuralNetwork {
     }
 }
 
-/*let nn = new NeuralNetwork(2, 3, 2);
-let X = [
-    [[1,0]],
-    [[0,1]]
-];
-for (let i=0;i<50;i++) {
-    console.log(i);
-    let [prediction, total_error] = nn.train(X[i%2], X[(i+1)%2]);
-    console.log("pred: " + prediction + " err: " + total_error);
-}
-console.log("");
-console.log("test: ");
-try {
-    let prediction = nn.test([[1, 0]])[0];
-    console.log(prediction);
-    prediction = nn.test([[0,1]])[0];
-    console.log(prediction);
-} catch (e) {
-    console.error(e);
-}
-process.exit(0);
-*/
-
 
 class Trainer extends EventEmitter {
     constructor() {
@@ -121,7 +98,7 @@ class Trainer extends EventEmitter {
         this.X = [];
         this.size = DEFAULT_MAX_SQUARES;
         this.reset();
-        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 20, NUM_NUM);
+        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 15, NUM_NUM);
         //TODO replace out with X, modify directly X and then pass it to the net...
     }
 
@@ -174,7 +151,7 @@ class Trainer extends EventEmitter {
     }
 
     train(y) {
-        console.log("X:"+this.X);
+        console.log("X:" + this.X);
         let Y = [];
         Y.length = NUM_NUM;
         Y.fill(0);
@@ -193,7 +170,7 @@ class Trainer extends EventEmitter {
         }
 
         // sort the other array
-        for (let i = 0; i < pred.length-1; i++) {
+        for (let i = 0; i < pred.length - 1; i++) {
             for (let j = i + 1; j < pred.length; j++) {
                 if (pred[i].accuracy < pred[j].accuracy) {
                     let s = pred[i];

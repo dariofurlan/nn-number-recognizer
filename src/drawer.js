@@ -5,7 +5,7 @@ const OPACITY = .6;
 class Drawer extends EventEmitter {
     constructor(canvas, X_ref, parent) {
         super();
-        this.blur = true;
+        this.blur = false;
         this.X = X_ref;
         this.canvas = canvas;
         this.parent = parent;

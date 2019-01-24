@@ -1,9 +1,11 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './style.scss';
 
-import $ from 'jquery';
 import {Trainer} from './trainer';
 import {Drawer} from './drawer';
+
+// TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
+
 
 /* ----------------------------------REFS--------------------------------- */
 const parent = document.getElementById('paint-box');
@@ -53,7 +55,7 @@ function step_1 () {
     console.log("step_1");
     drawer.enabled =false;
     trainer.reduce();
-    setTimeout(step_2, 250);
+    setTimeout(step_2, 500);
 }
 function step_2() {
     console.log("step_2");
