@@ -12,19 +12,16 @@ const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
 
 
-
-
 /* -------------------------------CONSTANTS------------------------------- */
-const DEFAULT_MAX_SQUARES = 16;
-const DEFAULT_MIN_SQUARES = 8; // 8=64 input, 16=256 input, ...
-
+const TIME_TO_DRAW = 1 * 1000;
 
 /* -------------------------------VARIABLES------------------------------- */
-const trainer = new Trainer(DEFAULT_MAX_SQUARES);
+const trainer = new Trainer();
 const drawer = new Drawer(canvas, trainer.X, parent);
 
 
 init_components();
+draw_loop();
 /* -------------------------------FUNCTIONS------------------------------- */
 function init_components() {
     trainer.on('update', () => {
@@ -32,9 +29,9 @@ function init_components() {
     });
 }
 
-const TIME_TO_DRAW = 1 * 1000;
+
 function draw_loop() {
-    let y = trainer.get_random_y();
+    let y = Trainer.get_random_y();
     msg_y.innerText = y;
     drawer.enabled = true;
 

@@ -1,8 +1,8 @@
 const EventEmitter = require('events');
 const math = require('mathjs');
 
-const DEFAULT_MAX_SQUARES = 64;
-const DEFAULT_MIN_SQUARES = 8;
+const DEFAULT_MAX_SQUARES = 8;
+const DEFAULT_MIN_SQUARES = 4;
 const NUM_NUM = 2;
 
 class NeuralNetwork {
@@ -11,7 +11,7 @@ class NeuralNetwork {
         this.hiddenLayerSize = hidden; // I don't know what is the best value
         this.outputLayerSize = output;
 
-        this.learning_rate = 100;
+        this.learning_rate = 5;
 
         this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
             return row.map(() => {
@@ -62,10 +62,12 @@ class NeuralNetwork {
         console.log(dJdW2);
 
         let sigprime2 = NeuralNetwork.sigmoidPrime(this.Z2);
+        console.log(sigprime2);
+        console.log(delta3);
         let delta2 = math.dotMultiply(math.multiply(delta3, math.transpose(this.W2)), sigprime2);
         let dJdW1 = math.multiply(math.transpose(X), delta2);
 
-        console.log(dJdW1);
+        //console.log(dJdW1);
         return [dJdW1, dJdW2];
     }
 
@@ -82,19 +84,19 @@ class NeuralNetwork {
         return [prediction, total_error];
     }
 }
-/*let nn = new NeuralNetwork(2, 3, 2);
+let nn = new NeuralNetwork(2, 3, 2);
 let [prediction, total_error] = nn.train([[1, 2]], [[0, 1]]);
 console.log("pred: "+prediction+" err: " + total_error);
-process.exit(0);*/
+process.exit(0);
 
 class Trainer extends EventEmitter {
-    constructor(size) {
+    constructor() {
         super();
         this.X = [];
-        this.size = size;
+        this.size = DEFAULT_MAX_SQUARES;
         this.X.length = this.size * this.size;
         this.X.fill(0);
-        this.nn = new NeuralNetwork(64, 32, NUM_NUM);
+        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 8, NUM_NUM);
         //TODO replace out with X, modify directly X and then pass it to the net...
     }
 
@@ -104,7 +106,7 @@ class Trainer extends EventEmitter {
      */
     reduce(conv_size = 2) {
         if (this.X.length / 4 < DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
-            return;
+            return false;
         let average = (array) => array.reduce((a, b) => a + b) / array.length;
         let convolute = (conv_size, edge_size, x, y) => {
             // TODO for now do a simple average, later do with the kernel
@@ -134,13 +136,14 @@ class Trainer extends EventEmitter {
         }
         this.X.length = newOut.length;
         this.update();
+        return true;
     }
 
     update() {
         this.emit('update');
     }
 
-    get_random_y() {
+    static get_random_y() {
         let y = Math.floor(Math.random() * NUM_NUM);
         return y;
     }
@@ -184,6 +187,6 @@ class Trainer extends EventEmitter {
     }
 }
 
-export {
+/*export {
     Trainer
-};
+};*/
