@@ -3,6 +3,7 @@ const math = require('mathjs');
 
 const DEFAULT_MAX_SQUARES = 64;
 const DEFAULT_MIN_SQUARES = 8;
+const NUM_NUM = 2;
 
 class NeuralNetwork {
     constructor(input, hidden, output) {
@@ -10,7 +11,7 @@ class NeuralNetwork {
         this.hiddenLayerSize = hidden; // I don't know what is the best value
         this.outputLayerSize = output;
 
-        this.learning_rate = 5;
+        this.learning_rate = 100;
 
         this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
             return row.map(() => {
@@ -71,8 +72,8 @@ class NeuralNetwork {
     train(X, y) {
         let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
         //console.log(dJdW1 + "-" + dJdW2);
-        this.W2 = math.subtract(this.W2, math.multiply(-this.learning_rate, dJdW2));
-        this.W1 = math.subtract(this.W1, math.multiply(-this.learning_rate, dJdW1));
+        this.W2 = math.subtract(this.W2, math.multiply(this.learning_rate, dJdW2));
+        this.W1 = math.subtract(this.W1, math.multiply(this.learning_rate, dJdW1));
         return this.test(X, y);
     }
 
@@ -91,9 +92,10 @@ class Trainer extends EventEmitter {
     constructor(size) {
         super();
         this.X = [];
-        this.X.length = size * size;
+        this.size = size;
+        this.X.length = this.size * this.size;
         this.X.fill(0);
-        this.nn = new NeuralNetwork(64, 32,10);
+        this.nn = new NeuralNetwork(64, 32, NUM_NUM);
         //TODO replace out with X, modify directly X and then pass it to the net...
     }
 
@@ -137,14 +139,14 @@ class Trainer extends EventEmitter {
         this.emit('update');
     }
 
-    static get_random_y() {
-        let y = Math.floor(Math.random() * 10);
+    get_random_y() {
+        let y = Math.floor(Math.random() * NUM_NUM);
         return y;
     }
 
     train(y) {
         let Y = [];
-        Y.length = 10;
+        Y.length = NUM_NUM;
         Y.fill(0);
         Y[y] = 1;
 
@@ -155,15 +157,15 @@ class Trainer extends EventEmitter {
         let pred = [];
         for (let i=0;i<prediction[0].length;i++) {
             pred[i] = {
-                "number":i,
-                "accuracy":prediction[0][i]
+                number:i,
+                accuracy:prediction[0][i]
             };
         }
 
         // sort the other array
         for (let i=0;i<pred.length-1;i++)  {
             for (let j=i+1;j<pred.length;j++) {
-                if (pred[i]["accuracy"]<pred[j]["accuracy"]) {
+                if (pred[i].accuracy<pred[j].accuracy) {
                     let s = pred[i];
                     pred[i] = pred[j];
                     pred[j] = s;
@@ -172,6 +174,12 @@ class Trainer extends EventEmitter {
         }
 
         return [pred, error];
+    }
+
+    reset() {
+        this.X.length = this.size * this.size;
+        this.X.fill(0);
+        this.update();
     }
 }
 
