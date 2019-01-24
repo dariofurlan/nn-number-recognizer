@@ -71,7 +71,6 @@ class NeuralNetwork {
 
     train(X, y) {
         let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
-        //console.log(dJdW1 + "-" + dJdW2);
         this.W2 = math.subtract(this.W2, math.multiply(this.learning_rate, dJdW2));
         this.W1 = math.subtract(this.W1, math.multiply(this.learning_rate, dJdW1));
         return this.test(X, y);
@@ -104,6 +103,8 @@ class Trainer extends EventEmitter {
      * @param conv_size default:2
      */
     reduce(conv_size = 2) {
+        if (this.X.length / 4 < DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
+            return;
         let average = (array) => array.reduce((a, b) => a + b) / array.length;
         let convolute = (conv_size, edge_size, x, y) => {
             // TODO for now do a simple average, later do with the kernel

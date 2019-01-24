@@ -1,5 +1,10 @@
-class Drawer {
+const EventEmitter = require('events');
+
+const OPACITY = .4;
+
+class Drawer extends EventEmitter {
     constructor(canvas, X_ref, parent) {
+        super();
         this.X = X_ref;
         this.canvas = canvas;
         this.parent = parent;
@@ -11,8 +16,19 @@ class Drawer {
             this.draw_on_grid(e);
             this.mousedown = false;
         };
-        this.canvas.onmouseup = () => this.mousedown = false;
-        this.canvas.onmouseleave = () => this.mousedown = false;
+        this.canvas.onmouseup = this.canvas.onmouseleave = () => this.mousedown = false;
+        this.canvas.ontouchstart = this.canvas.ontouchmove = (e) => {
+            e.preventDefault(); e.stopPropagation();
+            this.mousedown = true;
+            this.draw_on_grid(new MouseEvent("mousemove", {
+                clientX: e.touches[0].clientX,
+                clientY: e.touches[0].clientY
+            }));
+            this.mousedown = false;
+        };
+        window.onload = window.onresize = (e) => {
+            this.updateCanvasSize();
+        };
     }
 
     draw_on_grid(e) {
@@ -23,8 +39,6 @@ class Drawer {
 
         let pos = this.getPosition(x, y);
         let ns = Math.sqrt(this.X.length);
-
-        const OPACITY = .6;
 
         this.X[pos] = 1;
 
@@ -48,6 +62,7 @@ class Drawer {
                 this.X[pos + 1] = OPACITY;
             }
         }
+        this.emit("drawing");
         this.redraw();
     }
 

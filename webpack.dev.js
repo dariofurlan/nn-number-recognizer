@@ -4,6 +4,7 @@ const path = require('path');
 
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = merge(common, {
     target: 'web',
@@ -27,6 +28,7 @@ module.exports = merge(common, {
         new webpack.DefinePlugin({
             __EXAMPLE__: JSON.stringify("AAAA")
         }),
+        new CleanWebpackPlugin(["dist/*.*"]),
     ],
     module: {
         rules: [{
