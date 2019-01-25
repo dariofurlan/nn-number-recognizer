@@ -1,13 +1,13 @@
 import * as EventEmitter from 'events';
-import {NeuralNetwork} from "./neural_network";
+import NeuralNetwork from "./neural_network";
 
-const INITIAL_SIZE = 16;
+const INITIAL_SIZE = 28;
 const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
 const NUM_NUM = 4;
 const HIDDEN_LAYER_SIZE = 10;
 const CONV_SIZE = 2;
 
-class Trainer extends EventEmitter {
+export default class Trainer extends EventEmitter {
     constructor() {
         super();
         this.draws = [];
@@ -15,6 +15,23 @@ class Trainer extends EventEmitter {
         this.size = INITIAL_SIZE;
         this.reset();
         this.nn = new NeuralNetwork(Math.pow(AFTER_POOL_SIZE, 2), HIDDEN_LAYER_SIZE, NUM_NUM);
+    }
+
+    static get_train_Y() {
+        return Array.from(Array(NUM_NUM).keys());
+    }
+
+    static get_ordered_y() {
+        let y = 0;
+        if (this.last_y !== undefined && this.last_y < NUM_NUM - 1)
+            y = this.last_y + 1;
+        this.last_y = y;
+        return y;
+    }
+
+    static get_test_y() {
+        let y = Math.floor(Math.random() * NUM_NUM);
+        return y;
     }
 
     avg_pooling() {
@@ -89,25 +106,99 @@ class Trainer extends EventEmitter {
         return true;
     }
 
+    augment() {
+        // calculate what types of movements its possible to do
+        // do all the combination to obtain more data
+        let ns = Math.sqrt(this.X.length);
+
+        let bound = {
+            x: {
+                min: null,
+                max: null
+            },
+            y: {
+                min: null,
+                max: null
+            }
+        };
+        for (let y = ns - 1; y >= 0; y--) {
+            for (let x = ns - 1; x >= 0; x--) {
+                let pos = (y * ns) + x;
+                if (this.X[pos] !== 0) {
+                    if (x > bound.x.max)
+                        bound.x.max = x;
+                    else
+                        bound.x.min = x;
+                    if (y > bound.y.max)
+                        bound.y.max = y;
+                    else
+                        bound.y.min = y;
+                }
+            }
+        }
+        if (bound.x.min === null)
+            bound.x.min = bound.x.max;
+        if (bound.y.min === null)
+            bound.y.min = bound.y.max;
+
+
+        console.log(bound);
+        let max = ns - 1;
+        let delta = {
+            x: {
+                right: max - bound.x.max,
+                left: bound.x.min
+            }, y: {
+                down: max - bound.y.max,
+                up: bound.y.min
+            }
+        };
+        console.log(delta);
+
+        // moveX
+        let moveX = (deltaX) => {
+            // TODO handle differents directions !!!!!!!!!!
+            let coll = {top: false, bottom: false, left: false, right: false};
+            for (let y = 0; y < ns; y++) {
+                for (let x = ns - 1; x >= 0; x--) {
+                    let pos = (y * ns) + x;
+                    if (this.X[pos] === 0)
+                        continue;
+                    coll.top = coll.bottom = coll.left = coll.right = false;
+
+                    if (x === ns - 1) {
+                        // sono a destra
+                        this.X[pos] = 0;
+                    } else if (x === 0) {
+                        // sono a sinistra
+                        this.X[pos] = 0;
+                    } else {
+                        // posso spostarmi tranquillamente a destra
+                        this.X[pos + deltaX] = this.X[pos];
+                        this.X[pos] = 0;
+                    }
+                }
+            }
+        };
+
+        /*let moveY = () => {
+            if (pos <= (ns - 1)) {
+                coll.top = true;
+            }
+            if (pos >= this.X.length - (ns - 1)) {
+                coll.bottom = true;
+            }
+        };*/
+        moveX(-1);
+        this.update();
+
+        // moveY
+
+        // randomly change opacity
+    }
+
     update() {
         this.emit('update');
-    }
-
-    static get_train_Y() {
-        return Array.from(Array(NUM_NUM).keys());
-    }
-
-    static get_ordered_y() {
-        let y = 0;
-        if (this.last_y !== undefined && this.last_y < NUM_NUM - 1)
-            y = this.last_y + 1;
-        this.last_y = y;
-        return y;
-    }
-
-    static get_test_y() {
-        let y = Math.floor(Math.random() * NUM_NUM);
-        return y;
     }
 
     add_draw() {
@@ -174,7 +265,3 @@ class Trainer extends EventEmitter {
         this.update();
     }
 }
-
-export {
-    Trainer
-};

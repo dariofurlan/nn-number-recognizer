@@ -2,14 +2,15 @@ const EventEmitter = require('events');
 
 const DEFAULT_BLUR_OPACITY = .6;
 
-class Drawer extends EventEmitter {
-    constructor(canvas, X_ref, parent) {
+export default class Drawer extends EventEmitter {
+    constructor(canvas, X_ref, parent, prg_bar) {
         super();
         this.blur = false;
         this.blur_opacity = DEFAULT_BLUR_OPACITY;
         this.X = X_ref;
         this.canvas = canvas;
         this.parent = parent;
+        this.prg_bar = prg_bar;
         this.ctx = this.canvas.getContext("2d");
         this.canvas.onmousedown = () => this.mousedown = true;
         this.canvas.onmousemove = (e) => this.draw_on_grid(e);
@@ -20,7 +21,8 @@ class Drawer extends EventEmitter {
         };
         this.canvas.onmouseup = this.canvas.onmouseleave = () => this.mousedown = false;
         this.canvas.ontouchstart = this.canvas.ontouchmove = (e) => {
-            e.preventDefault(); e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
             this.mousedown = true;
             this.draw_on_grid(new MouseEvent("mousemove", {
                 clientX: e.touches[0].clientX,
@@ -44,21 +46,25 @@ class Drawer extends EventEmitter {
 
         this.X[pos] = 1;
         if (this.blur) {
+            // TOP
             if (pos > (ns - 1)) {
                 if (this.X[pos - ns] === 0) {
                     this.X[pos - ns] = this.blur_opacity;
                 }
             }
+            // BOTTOM
             if (pos < this.X.length - (ns - 1)) {
                 if (this.X[pos + ns] === 0) {
                     this.X[pos + ns] = this.blur_opacity;
                 }
             }
+            // LEFT
             if (pos % ns !== 0) {
                 if (this.X[pos - 1] === 0) {
                     this.X[pos - 1] = this.blur_opacity;
                 }
             }
+            // RIGHT
             if ((pos + 1) % ns !== 0) {
                 if (this.X[pos + 1] === 0) {
                     this.X[pos + 1] = this.blur_opacity;
@@ -98,6 +104,11 @@ class Drawer extends EventEmitter {
         return pos;
     }
 
+    update_progress(percent) {
+        this.prg_bar.style.width = percent + "%";
+        this.prg_bar.innerText = "training: " + percent + "%";
+    }
+
     redraw() {
         this.ctx.clearRect(0, 0, this.w, this.h);
         let i = 0;
@@ -126,8 +137,6 @@ class Drawer extends EventEmitter {
         }
     }
 }
-
-export {Drawer};
 
 
 

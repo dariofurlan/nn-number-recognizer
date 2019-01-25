@@ -1,6 +1,6 @@
-import * as math from  'mathjs';
+import * as math from 'mathjs';
 
-class NeuralNetwork {
+export default class NeuralNetwork {
     constructor(input, hidden, output) {
         this.inputLayerSize = input;
         this.hiddenLayerSize = hidden; // I don't know what is the best value
@@ -84,8 +84,4 @@ class NeuralNetwork {
         let prediction = this.forward(X);
         return prediction;
     }
-}
-
-export {
-    NeuralNetwork
 }
