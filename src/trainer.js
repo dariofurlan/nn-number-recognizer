@@ -1,113 +1,27 @@
-const EventEmitter = require('events');
-const math = require('mathjs');
+import * as EventEmitter from 'events';
+import {NeuralNetwork} from "./neural_network";
 
-const DEFAULT_MAX_SQUARES = 16;
-const DEFAULT_MIN_SQUARES = 8;
-const NUM_NUM = 2;
-
-class NeuralNetwork {
-    constructor(input, hidden, output) {
-        this.inputLayerSize = input;
-        this.hiddenLayerSize = hidden; // I don't know what is the best value
-        this.outputLayerSize = output;
-
-        this.learning_rate = 5;
-
-        this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
-            return row.map(() => {
-                return Math.random();
-            });
-        });
-        //console.log(this.W1);
-        this.W2 = math.randomInt([this.hiddenLayerSize, this.outputLayerSize]).map((row) => {
-            return row.map(() => {
-                return Math.random();
-            });
-        });
-        //console.log(this.W2);
-    }
-
-    static sigmoid(z) {
-        let bottom = math.add(1, math.exp(math.multiply(-1, z)));
-        return math.dotDivide(1, bottom);
-    }
-
-    static sigmoidPrime(z) {
-        let sig = NeuralNetwork.sigmoid(z);
-        return math.dotMultiply(sig, math.add(1, math.multiply(-1, sig)));
-        // error found here "dotMultiply" is correct, instead of "multiply" alone
-    }
-
-    forward(X) {
-        this.Z2 = math.multiply(X, this.W1);
-        this.A2 = NeuralNetwork.sigmoid(this.Z2);
-        this.Z3 = math.multiply(this.A2, this.W2);
-        let y_hat = NeuralNetwork.sigmoid(this.Z3);
-        return y_hat;
-    }
-
-    costFunction(X, y) {
-        let y_hat = this.forward(X);
-        /*console.log(y);
-        console.log(y_hat);
-        console.log(math.subtract(y, y_hat));*/
-
-        let J = math.sum(math.multiply(0.5, math.square(math.subtract(y, y_hat))));
-        return J;
-    }
-
-    costFunctionPrime(X, y) {
-        let y_hat = this.forward(X);
-        let sigprime3 = NeuralNetwork.sigmoidPrime(this.Z3);
-        let ymyhat = math.subtract(y, y_hat);
-        let left1 = math.multiply(-1, ymyhat);
-        let delta3 = math.dotMultiply(left1, sigprime3);
-        let dJdW2 = math.multiply(math.transpose(this.A2), delta3);
-
-        let sigprime2 = NeuralNetwork.sigmoidPrime(this.Z2);
-        let delta2 = math.dotMultiply(math.multiply(delta3, math.transpose(this.W2)), sigprime2);
-        let dJdW1 = math.multiply(math.transpose(X), delta2);
-
-        //console.log(dJdW1);
-        return [dJdW1, dJdW2];
-    }
-
-    train(X, y) {
-        let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
-        this.W2 = math.subtract(this.W2, math.multiply(this.learning_rate, dJdW2));
-        this.W1 = math.subtract(this.W1, math.multiply(this.learning_rate, dJdW1));
-        /*console.log(this.W1);
-        console.log(this.W2);*/
-        let error = this.costFunction(X, y);
-        return {
-            prediction: this.test(X, y),
-            error: error,
-        };
-    }
-
-    test(X) {
-        let prediction = this.forward(X);
-        return prediction;
-    }
-}
-
+const INITIAL_SIZE = 4;
+const AFTER_POOL_SIZE = INITIAL_SIZE/2;
+const NUM_NUM = 4;
+const HIDDEN_LAYER_SIZE = 10;
+const CONV_SIZE = 2;
 
 class Trainer extends EventEmitter {
     constructor() {
         super();
+        this.draws = [];
         this.X = [];
-        this.size = DEFAULT_MAX_SQUARES;
+        this.size = INITIAL_SIZE;
         this.reset();
-        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 22, NUM_NUM);
-        //TODO replace out with X, modify directly X and then pass it to the net...
+        this.nn = new NeuralNetwork(Math.pow(AFTER_POOL_SIZE, 2), HIDDEN_LAYER_SIZE, NUM_NUM);
     }
 
     /**
      * get the square convoluted n times
-     * @param conv_size default:2
      */
-    reduce(conv_size = 2) {
-        if (this.X.length / (conv_size*conv_size) < DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
+    avg_pooling() {
+        if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
             return false;
         let average = (array) => array.reduce((a, b) => a + b) / array.length;
         let convolute = (conv_size, edge_size, x, y) => {
@@ -125,15 +39,51 @@ class Trainer extends EventEmitter {
         let edge_size = Math.sqrt(this.X.length);
 
         let newOut = [];
-        newOut.length = this.X.length / (conv_size * conv_size);
+        newOut.length = this.X.length / (CONV_SIZE * CONV_SIZE);
         let new_edege_size = Math.sqrt(newOut.length);
 
-        for (let y = 0; y < edge_size; y += conv_size) {
-            for (let x = 0; x < edge_size; x += conv_size) {
+        for (let y = 0; y < edge_size; y += CONV_SIZE) {
+            for (let x = 0; x < edge_size; x += CONV_SIZE) {
                 // do the avg of 4 pixels and then assign it to newOut
-                let avg = convolute(conv_size, edge_size, x, y);
+                let avg = convolute(CONV_SIZE, edge_size, x, y);
                 let new_pos = (y) * new_edege_size + x;
                 this.X[new_pos / 2] = avg;
+            }
+        }
+        this.X.length = newOut.length;
+        this.update();
+        return true;
+    }
+
+    max_pooling() {
+        if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
+            return false;
+        let max = (array) => {return Math.max(array)};
+        let convolute = (conv_size, edge_size, x, y) => {
+            // TODO for now do a simple average, later do with the kernel
+            let pos = y * edge_size + x;
+            let K = [];
+            for (let ky = 0, kn = 0; ky < conv_size; ky++) {
+                for (let kx = 0; kx < conv_size; kx++, kn++) {
+                    K[kn] = this.X[pos + ky * edge_size + kx];
+                }
+            }
+            console.log(K.length);
+            return max(...K);
+        };
+
+        let edge_size = Math.sqrt(this.X.length);
+
+        let newOut = [];
+        newOut.length = this.X.length / (CONV_SIZE * CONV_SIZE);
+        let new_edege_size = Math.sqrt(newOut.length);
+
+        for (let y = 0; y < edge_size; y += CONV_SIZE) {
+            for (let x = 0; x < edge_size; x += CONV_SIZE) {
+                // do the avg of 4 pixels and then assign it to newOut
+                let max = convolute(CONV_SIZE, edge_size, x, y);
+                let new_pos = (y) * new_edege_size + x;
+                this.X[new_pos / 2] = max;
             }
         }
         this.X.length = newOut.length;
@@ -145,13 +95,51 @@ class Trainer extends EventEmitter {
         this.emit('update');
     }
 
-    static get_random_y() {
+    static get_train_Y() {
+        return Array.from(Array(NUM_NUM).keys());
+    }
+
+    static get_ordered_y() {
+        let y = 0;
+        if (this.last_y !== undefined && this.last_y < NUM_NUM - 1)
+            y = this.last_y + 1;
+        this.last_y = y;
+        return y;
+    }
+
+    static get_test_y() {
         let y = Math.floor(Math.random() * NUM_NUM);
         return y;
     }
 
+    add_draw() {
+        this.draws.push(this.X);
+    }
+
+    test() {
+        let prediction = this.nn.test(this.X);
+        let pred = [];
+        for (let i = 0; i < prediction.length; i++) {
+            pred[i] = {
+                number: i,
+                accuracy: prediction[i]
+            };
+        }
+
+        // sort the other array
+        for (let i = 0; i < pred.length - 1; i++) {
+            for (let j = i + 1; j < pred.length; j++) {
+                if (pred[i].accuracy < pred[j].accuracy) {
+                    let s = pred[i];
+                    pred[i] = pred[j];
+                    pred[j] = s;
+                }
+            }
+        }
+        return pred;
+    }
+
     train(y) {
-        console.log("X:" + this.X);
         let Y = [];
         Y.length = NUM_NUM;
         Y.fill(0);
@@ -190,5 +178,6 @@ class Trainer extends EventEmitter {
 }
 
 export {
-    Trainer
+    Trainer,
+    NUM_NUM
 };
