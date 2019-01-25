@@ -1,5 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './style.scss';
+import './style/style.scss';
 
 import {Trainer} from './trainer';
 import {Drawer} from './drawer';
@@ -28,6 +28,7 @@ let y;
 
 init_components();
 step_0();
+
 /* -------------------------------FUNCTIONS------------------------------- */
 function init_components() {
     trainer.on('update', () => {
@@ -38,11 +39,12 @@ function init_components() {
 drawer.on("drawing", () => {
     if (!drawer.enabled)
         return;
-    if (timeout!=null) {
+    if (timeout != null) {
         clearTimeout(timeout);
     }
     timeout = setTimeout(step_1, TIME_TO_DRAW);
 });
+
 function step_0() {
     console.log("step_0");
     trainer.reset();
@@ -51,19 +53,31 @@ function step_0() {
     timeout = null;
     drawer.enabled = true;
 }
-function step_1 () {
+
+function step_1() {
     console.log("step_1");
-    drawer.enabled =false;
+    drawer.enabled = false;
     trainer.reduce();
     setTimeout(step_2, 500);
 }
+
 function step_2() {
     console.log("step_2");
-    let [pred, error] = trainer.train(y);
-    msg_list.innerHTML = "";
-    for (let i = 0; i < pred.length; i++) {
-        msg_list.innerHTML += pred[i].number + ") " + pred[i].accuracy + "<br/>";
+    let i=0;
+    function loop() {
+        console.log("loop");
+        if (i === 40) {
+            setTimeout(step_0, 0);
+        }
+        let [pred, error] = trainer.train(y);
+        msg_list.innerHTML = "";
+        for (let i = 0; i < pred.length; i++) {
+            msg_list.innerHTML += pred[i].number + ") " + pred[i].accuracy + "<br/>";
+        }
+        msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
+        i++;
+        setTimeout(loop, 25);
     }
-    msg_list.innerHTML+="<br/>Errore: <b>"+error+"</b>";
-    setTimeout(step_0,0);
+    loop();
 }
+
