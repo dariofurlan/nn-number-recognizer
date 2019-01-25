@@ -1,8 +1,8 @@
 import * as EventEmitter from 'events';
 import {NeuralNetwork} from "./neural_network";
 
-const INITIAL_SIZE = 4;
-const AFTER_POOL_SIZE = INITIAL_SIZE/2;
+const INITIAL_SIZE = 16;
+const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
 const NUM_NUM = 4;
 const HIDDEN_LAYER_SIZE = 10;
 const CONV_SIZE = 2;
@@ -17,9 +17,6 @@ class Trainer extends EventEmitter {
         this.nn = new NeuralNetwork(Math.pow(AFTER_POOL_SIZE, 2), HIDDEN_LAYER_SIZE, NUM_NUM);
     }
 
-    /**
-     * get the square convoluted n times
-     */
     avg_pooling() {
         if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
             return false;
@@ -58,7 +55,9 @@ class Trainer extends EventEmitter {
     max_pooling() {
         if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
             return false;
-        let max = (array) => {return Math.max(array)};
+        let max = (array) => {
+            return Math.max.apply(null, array)
+        };
         let convolute = (conv_size, edge_size, x, y) => {
             // TODO for now do a simple average, later do with the kernel
             let pos = y * edge_size + x;
@@ -68,8 +67,7 @@ class Trainer extends EventEmitter {
                     K[kn] = this.X[pos + ky * edge_size + kx];
                 }
             }
-            console.log(K.length);
-            return max(...K);
+            return max(K);
         };
 
         let edge_size = Math.sqrt(this.X.length);
@@ -178,6 +176,5 @@ class Trainer extends EventEmitter {
 }
 
 export {
-    Trainer,
-    NUM_NUM
+    Trainer
 };
