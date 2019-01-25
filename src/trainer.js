@@ -2,8 +2,8 @@ const EventEmitter = require('events');
 const math = require('mathjs');
 
 const DEFAULT_MAX_SQUARES = 16;
-const DEFAULT_MIN_SQUARES = 16;
-const NUM_NUM = 3;
+const DEFAULT_MIN_SQUARES = 8;
+const NUM_NUM = 2;
 
 class NeuralNetwork {
     constructor(input, hidden, output) {

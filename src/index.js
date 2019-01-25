@@ -78,6 +78,7 @@ function step_2() {
             return;
         }
         let [pred, error] = trainer.train(y);
+        error = Math.round(error*1000000)/10000;
         msg_list.innerHTML = "iteration: "+i+"<br/>";
         for (let i = 0; i < pred.length; i++) {
             let acc = Math.round(pred[i].accuracy*1000000)/10000;
