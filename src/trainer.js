@@ -1,9 +1,9 @@
 const EventEmitter = require('events');
 const math = require('mathjs');
 
-const DEFAULT_MAX_SQUARES = 8;
-const DEFAULT_MIN_SQUARES = 4;
-const NUM_NUM = 2;
+const DEFAULT_MAX_SQUARES = 16;
+const DEFAULT_MIN_SQUARES = 16;
+const NUM_NUM = 3;
 
 class NeuralNetwork {
     constructor(input, hidden, output) {
@@ -98,7 +98,7 @@ class Trainer extends EventEmitter {
         this.X = [];
         this.size = DEFAULT_MAX_SQUARES;
         this.reset();
-        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 15, NUM_NUM);
+        this.nn = new NeuralNetwork(Math.pow(DEFAULT_MIN_SQUARES, 2), 22, NUM_NUM);
         //TODO replace out with X, modify directly X and then pass it to the net...
     }
 
@@ -107,7 +107,7 @@ class Trainer extends EventEmitter {
      * @param conv_size default:2
      */
     reduce(conv_size = 2) {
-        if (this.X.length / 4 < DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
+        if (this.X.length / (conv_size*conv_size) < DEFAULT_MIN_SQUARES * DEFAULT_MIN_SQUARES)
             return false;
         let average = (array) => array.reduce((a, b) => a + b) / array.length;
         let convolute = (conv_size, edge_size, x, y) => {
