@@ -1,9 +1,9 @@
 import * as EventEmitter from 'events';
 import NeuralNetwork from "./neural_network";
 
-const INITIAL_SIZE = 26;
+const INITIAL_SIZE = 32;
 const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
-const NUM_NUM = 10;
+const NUM_NUM = 2;
 const HIDDEN_LAYER_SIZE = 10;
 const CONV_SIZE = 2;
 
@@ -30,20 +30,18 @@ export default class Trainer extends EventEmitter {
     }
 
     static get_test_y() {
-        let y = Math.floor(Math.random() * NUM_NUM);
-        return y;
+        return Math.floor(Math.random() * NUM_NUM);
     }
 
     avg_pooling() {
         if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
             return false;
         let average = (array) => array.reduce((a, b) => a + b) / array.length;
-        let convolute = (conv_size, edge_size, x, y) => {
-            // TODO for now do a simple average, later do with the kernel
+        let convolve = (CONV_SIZE, edge_size, x, y) => {
             let pos = y * edge_size + x;
             let K = [];
-            for (let ky = 0, kn = 0; ky < conv_size; ky++) {
-                for (let kx = 0; kx < conv_size; kx++, kn++) {
+            for (let ky = 0, kn = 0; ky < CONV_SIZE; ky++) {
+                for (let kx = 0; kx < CONV_SIZE; kx++, kn++) {
                     K[kn] = this.X[pos + ky * edge_size + kx];
                 }
             }
@@ -59,7 +57,7 @@ export default class Trainer extends EventEmitter {
         for (let y = 0; y < edge_size; y += CONV_SIZE) {
             for (let x = 0; x < edge_size; x += CONV_SIZE) {
                 // do the avg of 4 pixels and then assign it to newOut
-                let avg = convolute(CONV_SIZE, edge_size, x, y);
+                let avg = convolve(CONV_SIZE, edge_size, x, y);
                 let new_pos = (y) * new_edege_size + x;
                 this.X[new_pos / 2] = avg;
             }
@@ -75,12 +73,12 @@ export default class Trainer extends EventEmitter {
         let max = (array) => {
             return Math.max.apply(null, array)
         };
-        let convolute = (conv_size, edge_size, x, y) => {
+        let convolve = (CONV_SIZE, edge_size, x, y) => {
             // TODO for now do a simple average, later do with the kernel
             let pos = y * edge_size + x;
             let K = [];
-            for (let ky = 0, kn = 0; ky < conv_size; ky++) {
-                for (let kx = 0; kx < conv_size; kx++, kn++) {
+            for (let ky = 0, kn = 0; ky < CONV_SIZE; ky++) {
+                for (let kx = 0; kx < CONV_SIZE; kx++, kn++) {
                     K[kn] = this.X[pos + ky * edge_size + kx];
                 }
             }
@@ -96,7 +94,7 @@ export default class Trainer extends EventEmitter {
         for (let y = 0; y < edge_size; y += CONV_SIZE) {
             for (let x = 0; x < edge_size; x += CONV_SIZE) {
                 // do the avg of 4 pixels and then assign it to newOut
-                let max = convolute(CONV_SIZE, edge_size, x, y);
+                let max = convolve(CONV_SIZE, edge_size, x, y);
                 let new_pos = (y) * new_edege_size + x;
                 this.X[new_pos / 2] = max;
             }
@@ -263,7 +261,7 @@ export default class Trainer extends EventEmitter {
             }
         }
         return [pred, error];
-    }
+    } //old one, now do batch training
 
     reset() {
         this.X.length = this.size * this.size;

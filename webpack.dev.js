@@ -8,7 +8,6 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = merge(common, {
     target: 'web',
-    name: 'frontend',
     mode: 'development',
     entry: path.join(__dirname, "src/index.js"),
     devServer: {

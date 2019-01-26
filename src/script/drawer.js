@@ -1,9 +1,9 @@
 const EventEmitter = require('events');
-
 const DEFAULT_BLUR_OPACITY = .6;
-
+const TIMER_TIME = 1500;
+const TIMER_STEPS = 100;
 export default class Drawer extends EventEmitter {
-    constructor(canvas, X_ref, parent, prg_bar) {
+    constructor(canvas, X_ref, parent, prg_bar, timer_progress_bar) {
         super();
         this.blur = false;
         this.blur_opacity = DEFAULT_BLUR_OPACITY;
@@ -11,6 +11,7 @@ export default class Drawer extends EventEmitter {
         this.canvas = canvas;
         this.parent = parent;
         this.prg_bar = prg_bar;
+        this.timer_progress_bar = timer_progress_bar;
         this.ctx = this.canvas.getContext("2d");
         this.canvas.onmousedown = () => this.mousedown = true;
         this.canvas.onmousemove = (e) => this.draw_on_grid(e);
@@ -30,9 +31,41 @@ export default class Drawer extends EventEmitter {
             }));
             this.mousedown = false;
         };
-        window.onload = window.onresize = (e) => {
+        window.onload = window.onresize = () => {
             this.updateCanvasSize();
         };
+    }
+
+    enable() {
+        this.enabled = true;
+        this.canvas.style.cursor = "pointer";
+    }
+
+    disable() {
+        this.enabled = false;
+        this.canvas.style.cursor = "not-allowed";
+    }
+
+    reset_timer() {
+        // reset
+        // restart
+        if (!this.enabled)
+            return;
+        if (this.timeout != null) {
+            clearTimeout(this.timeout);
+        }
+        this.n=0;
+        let step = TIMER_TIME/TIMER_STEPS;
+        this.timeout = setInterval(()=>{
+            this.emit("timer_progress",(this.n*step)/TIMER_TIME*100);
+            if (this.n*step>=TIMER_TIME) {
+                this.emit("timer end");
+                clearTimeout(this.timeout);
+                this.timeout = null;
+                return;
+            }
+            this.n++;
+        }, step);
     }
 
     draw_on_grid(e) {
@@ -79,7 +112,7 @@ export default class Drawer extends EventEmitter {
     updateCanvasSize() {
         this.bound_canvas = this.canvas.getBoundingClientRect();
         let winh = window.innerHeight;
-        let edge = this.parent.offsetWidth;
+        let edge = this.parent.clientWidth-30;
         if (edge > winh * .9) // todo fix this
             edge = winh * .9;
         edge = Math.round(edge);
@@ -104,9 +137,14 @@ export default class Drawer extends EventEmitter {
         return pos;
     }
 
-    update_progress(percent) {
+    update_progress_train(percent) {
         this.prg_bar.style.width = percent + "%";
         this.prg_bar.innerText = "training: " + percent + "%";
+    }
+
+    update_progress_timer(percent) {
+        percent = Math.round(percent);
+        this.timer_progress_bar.style.width = percent + "%";
     }
 
     redraw() {

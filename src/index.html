@@ -9,9 +9,10 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-8 align-content-center" id="half-left">
-            <div class="paint-box" id="paint-box">
-                <canvas id="canvas"></canvas>
+            <div class="progress" style="height: 5px;">
+                <div id="timer" class="progress-bar bg-danger" role="progressbar" style="width: 0;"></div>
             </div>
+            <canvas id="canvas"></canvas>
             <div class="progress" style="height:35px">
                 <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:0; height:35px"
                      id="prg1"></div>
@@ -23,7 +24,5 @@
         </div>
     </div>
 </div>
-
-<!--TODO  disegnare il numero e la rete neurale lo elabora -->
 </body>
 </html>
