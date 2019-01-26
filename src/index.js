@@ -31,13 +31,27 @@ trainer.on('update', () => {
 
 
 new Train().draw_new_number();
-
 /* -------------------------------FUNCTIONS------------------------------- */
+function download(filename, text) {
+    let element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+}
+
 function Train() {
     this.timeout = null;
 
     let Y = Trainer.get_train_Y();
     let i = 0;
+    let c = 0;
+    let max_c =5;
 
     let cb = () => {
         if (!drawer.enabled)
@@ -52,7 +66,13 @@ function Train() {
 
     this.draw_new_number = () => {
         if (i > Y.length - 1) {
-            this.train();
+            //this.train();
+            //return;
+            c++;
+            i=0;
+        }
+        if (c === max_c) {
+            download("file.json",JSON.stringify(trainer.draws));
             return;
         }
         trainer.reset();
@@ -63,11 +83,11 @@ function Train() {
 
     this.augment = () => {
         drawer.enabled = false;
-        drawer.update_progress(Math.round(((i + 1) / Y.length) * 100));
-        trainer.add_draw();
-        trainer.augment();
+        drawer.update_progress(Math.round((((c*max_c)+ i + 1) / (Y.length*max_c)) * 100));
+        trainer.add_draw(Y[i]);
+        //trainer.augment();
         i++;
-        //this.draw_new_number();
+        this.draw_new_number();
     };
 
     this.train = () => {

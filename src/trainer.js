@@ -1,16 +1,16 @@
 import * as EventEmitter from 'events';
 import NeuralNetwork from "./neural_network";
 
-const INITIAL_SIZE = 28;
+const INITIAL_SIZE = 26;
 const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
-const NUM_NUM = 4;
+const NUM_NUM = 10;
 const HIDDEN_LAYER_SIZE = 10;
 const CONV_SIZE = 2;
 
 export default class Trainer extends EventEmitter {
     constructor() {
         super();
-        this.draws = [];
+        this.draws = {};
         this.X = [];
         this.size = INITIAL_SIZE;
         this.reset();
@@ -115,8 +115,7 @@ export default class Trainer extends EventEmitter {
             x: {
                 min: null,
                 max: null
-            },
-            y: {
+            }, y: {
                 min: null,
                 max: null
             }
@@ -155,6 +154,7 @@ export default class Trainer extends EventEmitter {
         };
         console.log(delta);
 
+
         // moveX
         let moveX = (deltaX) => {
             // TODO handle differents directions !!!!!!!!!!
@@ -189,7 +189,7 @@ export default class Trainer extends EventEmitter {
                 coll.bottom = true;
             }
         };*/
-        moveX(-1);
+        moveX(+1);
         this.update();
 
         // moveY
@@ -201,8 +201,14 @@ export default class Trainer extends EventEmitter {
         this.emit('update');
     }
 
-    add_draw() {
-        this.draws.push(this.X);
+    add_draw(y) {
+        if (this.draws[y] === undefined) {
+            this.draws[y] = {};
+            this.draws[y]["X"] = [];
+            this.draws[y]["y"] = [];
+        }
+        this.draws[y]["X"].push(this.X);
+        this.draws[y]["y"].push(y);
     }
 
     test() {
