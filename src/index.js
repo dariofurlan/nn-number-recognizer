@@ -10,10 +10,6 @@ import Drawer from './script/drawer';
 
 
 /* ----------------------------------REFS--------------------------------- */
-const parent = document.getElementById('half-left');
-const prg_bar1 = document.getElementById('prg1');
-const timer_progress_bar = document.getElementById('timer');
-const canvas = document.getElementById('canvas');
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
 
@@ -21,15 +17,7 @@ const msg_list = document.getElementById('msg-list');
 const TIME_TO_DRAW = 1.5 * 1000;
 
 /* -------------------------------VARIABLES------------------------------- */
-const trainer = new Trainer();
-const drawer = new Drawer(canvas, trainer.X, parent, prg_bar1, timer_progress_bar);
-drawer.blur = false;
-drawer.blur_opacity = .3;
-
-trainer.on('update', () => {
-    drawer.redraw();
-});
-
+const drawer = new Drawer();
 
 new Train().draw_new_number();
 
@@ -48,7 +36,7 @@ function Train() {
     let Y = Trainer.get_train_Y();
     let i = 0;
     let c = 0;
-    let max_c = 2;
+    let max_c = 10;
 
     drawer.removeAllListeners("drawing");
     drawer.removeAllListeners("timer progress");
@@ -56,7 +44,10 @@ function Train() {
 
     drawer.on("drawing", () => drawer.reset_timer());
     drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
-    drawer.on("timer end", () => {this.augment();drawer.update_progress_timer(0);});
+    drawer.on("timer end", () => {
+        this.augment();
+        drawer.update_progress_timer(0);
+    });
 
     this.draw_new_number = () => {
         if (i > Y.length - 1) {
@@ -64,19 +55,19 @@ function Train() {
             i = 0;
         }
         if (c === max_c) {
-            download("file.json", JSON.stringify(trainer.draws));
+            download("file.json", JSON.stringify(drawer.trainer.draws));
+            drawer.trainer.reset();
             return;
         }
-        trainer.reset();
+        drawer.trainer.reset();
         msg_y.innerText = Y[i];
         drawer.enable();
     };
 
     this.augment = () => {
         drawer.disable();
-        console.log("x:" + i + ", c:" + c + ", Y.length:" + Y.length + ", max_c:" + max_c);
-        drawer.update_progress_train(Math.round((((c * max_c) + i + 1) / (Y.length * max_c)) * 100)); // ToDo fix this percentage, please
-        trainer.add_draw(Y[i]);
+        drawer.update_progress_train(Math.floor((c*max_c+i+1)*100/(Y.length * max_c))); // ToDo fix this percentage, please
+        drawer.trainer.add_draw(Y[i]);
         //trainer.augment();
         i++;
         this.draw_new_number();

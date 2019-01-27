@@ -3,7 +3,7 @@ import NeuralNetwork from "./neural_network";
 
 const INITIAL_SIZE = 32;
 const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
-const NUM_NUM = 2;
+const NUM_NUM = 10;
 const HIDDEN_LAYER_SIZE = 10;
 const CONV_SIZE = 2;
 
