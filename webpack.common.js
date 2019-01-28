@@ -2,6 +2,7 @@ const path = require('path');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     target: 'web',
@@ -10,7 +11,8 @@ module.exports = {
         new CleanWebpackPlugin(["dist/*.*"]),
         new HtmlWebpackPlugin({
             template: "src/index.html"
-        })
+        }),
+        new CopyWebpackPlugin([{from: "src/dataset/dataset.json", to:"dataset.json"}])
     ],
     output: {
         filename: 'bundle.js',

@@ -200,13 +200,20 @@ export default class Trainer extends EventEmitter {
     }
 
     add_draw(y) {
+        if (y === undefined)
+            throw new Error("y can't be undefined");
         if (this.draws[y] === undefined) {
-            this.draws[y] = {};
-            this.draws[y]["X"] = [];
-            this.draws[y]["y"] = [];
+            this.draws[y] = [];
         }
-        this.draws[y]["X"].push(this.X);
-        this.draws[y]["y"].push(y);
+        this.draws[y].push(Trainer.export(this.X));
+    }
+
+    static export(arr) {
+        return arr.join("");
+    }
+
+    static import(string_array) {
+        return string_array.split("");
     }
 
     test() {

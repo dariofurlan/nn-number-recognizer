@@ -4,7 +4,22 @@ import * as EventEmitter from 'events';
 const DEFAULT_BLUR_OPACITY = .6;
 const TIMER_TIME = 1500;
 const TIMER_STEPS = 100;
-export default class Drawer extends EventEmitter {
+
+function download(text) {
+    let element = document.createElement('a');
+    let date = new Date().toISOString().replace(/:/g,"-");
+    let filename = "dataset_" + date;
+    filename += ".json";
+    console.log(filename);
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+class Drawer extends EventEmitter {
     constructor() {
         super();
         this.blur = false;
@@ -59,11 +74,11 @@ export default class Drawer extends EventEmitter {
         if (this.timeout != null) {
             clearTimeout(this.timeout);
         }
-        this.n=0;
-        let step = TIMER_TIME/TIMER_STEPS;
-        this.timeout = setInterval(()=>{
-            this.emit("timer_progress",(this.n*step)/TIMER_TIME*100);
-            if (this.n*step>=TIMER_TIME) {
+        this.n = 0;
+        let step = TIMER_TIME / TIMER_STEPS;
+        this.timeout = setInterval(() => {
+            this.emit("timer_progress", (this.n * step) / TIMER_TIME * 100);
+            if (this.n * step >= TIMER_TIME) {
                 this.emit("timer end");
                 clearTimeout(this.timeout);
                 this.timeout = null;
@@ -117,7 +132,7 @@ export default class Drawer extends EventEmitter {
     updateCanvasSize() {
         this.bound_canvas = this.canvas.getBoundingClientRect();
         let winh = window.innerHeight;
-        let edge = this.parent.clientWidth-30;
+        let edge = this.parent.clientWidth - 30;
         if (edge > winh * .9) // todo fix this
             edge = winh * .9;
         edge = Math.round(edge);
@@ -140,6 +155,10 @@ export default class Drawer extends EventEmitter {
         if (pos > this.trainer.X.length)
             return this.trainer.X.length;
         return pos;
+    }
+
+    download() {
+        download(JSON.stringify(this.trainer.draws));
     }
 
     update_progress_train(percent) {
@@ -181,5 +200,7 @@ export default class Drawer extends EventEmitter {
     }
 }
 
-
+export {
+    Drawer, Trainer
+}
 

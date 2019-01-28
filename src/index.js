@@ -1,36 +1,29 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './style/style.scss';
 
-import Trainer from './script/trainer';
-import Drawer from './script/drawer';
+import {Drawer,Trainer} from './script/drawer';
 
 
-// TODO  sistemare il problema del disegno su chrome e cellulari
+// TODO  sistemare il problema del disegno su chrome e cellulari, migliorare quindi gli eventi del mouse, touch, pointer quello che è
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
+// TODO  load pre drawn numbers
+// TODO  prepare and download function inside drawer
+// TODO  finally create all error messages for the whole project
 
 
 /* ----------------------------------REFS--------------------------------- */
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
 
-/* -------------------------------CONSTANTS------------------------------- */
-const TIME_TO_DRAW = 1.5 * 1000;
 
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
-new Train().draw_new_number();
 
+//drawer.download();
+
+new Train().draw_new_number();
 /* -------------------------------FUNCTIONS------------------------------- */
-function download(filename, text) {
-    let element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
 
 function Train() {
     let Y = Trainer.get_train_Y();
@@ -55,7 +48,7 @@ function Train() {
             i = 0;
         }
         if (c === max_c) {
-            download("file.json", JSON.stringify(drawer.trainer.draws));
+            drawer.download();
             drawer.trainer.reset();
             return;
         }
