@@ -19,10 +19,6 @@ const msg_list = document.getElementById('msg-list');
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
-drawer.trainer.add_X(1);
-console.log(drawer.trainer.dataset);
-console.log(drawer.trainer.export_dataset());
-
 new Train().draw_new_number();
 /* -------------------------------FUNCTIONS------------------------------- */
 

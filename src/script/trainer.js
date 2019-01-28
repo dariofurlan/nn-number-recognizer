@@ -238,7 +238,7 @@ export default class Trainer extends EventEmitter {
         for (let num_key in dataset_obj) {
             let num_data = dataset_obj[num_key];
             for (let i = 0; i < num_data.length; i++) {
-                this.add_data(y,)
+                this.add_data(y,Trainer.import(num_data[i]))
             }
         }
     }
@@ -247,7 +247,7 @@ export default class Trainer extends EventEmitter {
         let dataset = {};
         for (let key in this.dataset) {
             dataset[key] = [];
-            for (let i = 0; i < this.dataset[key]; i++) {
+            for (let i = 0; i < this.dataset[key].length; i++) {
                 dataset[key][i] = Trainer.export(this.dataset[key][i]);
             }
         }
