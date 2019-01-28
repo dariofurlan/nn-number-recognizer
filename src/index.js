@@ -19,11 +19,22 @@ const msg_list = document.getElementById('msg-list');
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
-
-//drawer.download();
+drawer.trainer.add_X(1);
+console.log(drawer.trainer.dataset);
+console.log(drawer.trainer.export_dataset());
 
 new Train().draw_new_number();
 /* -------------------------------FUNCTIONS------------------------------- */
+
+function load() {
+    let oReq = new XMLHttpRequest();
+    oReq.onload = () => {
+        let dataset = JSON.parse(oReq.responseText);
+        console.log(dataset);
+    };
+    oReq.open("GET", "http://0.0.0.0:8000/dataset/dataset_2019-01-28T18-11-25.979Z_dario.json");
+    oReq.send();
+}
 
 function Train() {
     let Y = Trainer.get_train_Y();
@@ -60,7 +71,7 @@ function Train() {
     this.augment = () => {
         drawer.disable();
         drawer.update_progress_train(Math.floor((c*max_c+i+1)*100/(Y.length * max_c))); // ToDo fix this percentage, please
-        drawer.trainer.add_draw(Y[i]);
+        drawer.trainer.add_X(Y[i]);
         //trainer.augment();
         i++;
         this.draw_new_number();
