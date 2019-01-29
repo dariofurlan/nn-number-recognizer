@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './style/style.scss';
 
 import {Drawer,Trainer} from './script/drawer';
-
+import Dataset from './script/dataset';
 
 // TODO  sistemare il problema del disegno su chrome e cellulari, migliorare quindi gli eventi del mouse, touch, pointer quello che è
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
@@ -53,6 +53,7 @@ function Train() {
         if (i > Y.length - 1) {
             c++;
             i = 0;
+            drawer.download();
         }
         if (c === max_c) {
             drawer.download();

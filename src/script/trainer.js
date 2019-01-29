@@ -1,5 +1,6 @@
 import * as EventEmitter from 'events';
 import NeuralNetwork from "./neural_network";
+import Dataset from './dataset';
 
 const INITIAL_SIZE = 32;
 const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
@@ -10,7 +11,7 @@ const CONV_SIZE = 2;
 export default class Trainer extends EventEmitter {
     constructor() {
         super();
-        this.dataset = {};
+        this.dataset = new Dataset();
         this.X = [];
         this.size = INITIAL_SIZE;
         this.reset();
@@ -31,14 +32,6 @@ export default class Trainer extends EventEmitter {
 
     static get_test_y() {
         return Math.floor(Math.random() * NUM_NUM);
-    }
-
-    static export(arr) {
-        return arr.join("");
-    }
-
-    static import(array_str) {
-        return array_str.split("");
     }
 
     avg_pooling() {
@@ -208,7 +201,7 @@ export default class Trainer extends EventEmitter {
     }
 
     add_X(y) {
-        this.add_data(y, this.X)
+        this.add_data(y, this.X);
     }
 
     /**
@@ -218,40 +211,13 @@ export default class Trainer extends EventEmitter {
      * @param X the array of the number draw
      */
     add_data(y, X) {
-        if (y === undefined)
-            throw new Error("y can't be undefined");
-        if (this.dataset[y] === undefined) {
-            this.dataset[y] = [];
-        }
-        this.dataset[y].push(X);
+        this.dataset.add(y,X);
     }
 
     import_into_X(array) {
         if (array.length !== this.size * this.size)
             throw new Error("Array size doesn't match");
         this.reset();
-    }
-
-    import_dataset(dataset_obj) {
-        // todo reset or push data to "this.dataset"?
-        this.dataset = {};
-        for (let num_key in dataset_obj) {
-            let num_data = dataset_obj[num_key];
-            for (let i = 0; i < num_data.length; i++) {
-                this.add_data(y,Trainer.import(num_data[i]))
-            }
-        }
-    }
-
-    export_dataset() {
-        let dataset = {};
-        for (let key in this.dataset) {
-            dataset[key] = [];
-            for (let i = 0; i < this.dataset[key].length; i++) {
-                dataset[key][i] = Trainer.export(this.dataset[key][i]);
-            }
-        }
-        return JSON.stringify(dataset);
     }
 
     test() {

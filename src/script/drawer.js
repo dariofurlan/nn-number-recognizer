@@ -158,7 +158,7 @@ class Drawer extends EventEmitter {
     }
 
     download() {
-        download(JSON.stringify(this.trainer.dataset));
+        this.trainer.dataset.export_n_download();
     }
 
     update_progress_train(percent) {
