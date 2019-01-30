@@ -5,18 +5,36 @@ const DEFAULT_BLUR_OPACITY = .6;
 const TIMER_TIME = 1500;
 const TIMER_STEPS = 100;
 
-function download(text) {
-    let element = document.createElement('a');
-    let date = new Date().toISOString().replace(/:/g,"-");
-    let filename = "dataset_" + date;
-    filename += ".json";
-    console.log(filename);
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+class Timer extends EventEmitter {
+    constructor() {
+        super();
+        this.is_running = false;
+        this.timeout = null;
+    }
+
+    start() {
+        if (!this.is_running) {
+            console.log("started");
+            this.is_running = true;
+            let n = 0;
+            let step = TIMER_TIME / TIMER_STEPS;
+            this.timeout = setInterval(() => {
+                this.emit("timer_progress", (n * step) / TIMER_TIME * 100);
+                if (n * step >= TIMER_TIME) {
+                    this.emit("timer end");
+                    this.reset();
+                }
+                n++;
+            }, step);
+        }
+    }
+
+    reset() {
+        console.log("reset");
+        clearTimeout(this.timeout);
+        this.timeout = null;
+        this.is_running = false;
+    }
 }
 
 class Drawer extends EventEmitter {
@@ -30,17 +48,28 @@ class Drawer extends EventEmitter {
         });
         this.canvas = document.getElementById('canvas');
         this.parent = document.getElementById('half-left');
-        this.prg_bar = document.getElementById('prg1');
+        this.general_progress_bar = document.getElementById('prg1');
         this.timer_progress_bar = document.getElementById('timer');
         this.ctx = this.canvas.getContext("2d");
-        this.canvas.onmousedown = () => this.mousedown = true;
-        this.canvas.onmousemove = (e) => this.draw_on_grid(e);
+        this.timer = new Timer();
+        this.init_events();
+    }
+
+    init_events() {
+        this.canvas.onmousedown = this.canvas.onpointerdown = () => {
+            this.mousedown = true;
+        };
+        this.canvas.onmousemove = this.canvas.onpointermove = (e) => {
+            this.draw_on_grid(e);
+        };
         this.canvas.onclick = (e) => {
             this.mousedown = true;
             this.draw_on_grid(e);
             this.mousedown = false;
         };
-        this.canvas.onmouseup = this.canvas.onmouseleave = () => this.mousedown = false;
+        this.canvas.onmouseup = this.canvas.onmouseleave = this.canvas.onpointerup = this.canvas.onpointerleave =  () => {
+            this.mousedown = false;
+        };
         this.canvas.ontouchstart = this.canvas.ontouchmove = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -67,8 +96,6 @@ class Drawer extends EventEmitter {
     }
 
     reset_timer() {
-        // reset
-        // restart
         if (!this.enabled)
             return;
         if (this.timeout != null) {
@@ -162,8 +189,8 @@ class Drawer extends EventEmitter {
     }
 
     update_progress_train(percent) {
-        this.prg_bar.style.width = percent + "%";
-        this.prg_bar.innerText = "training: " + percent + "%";
+        this.general_progress_bar.style.width = percent + "%";
+        this.general_progress_bar.innerText = "training: " + percent + "%";
     }
 
     update_progress_timer(percent) {

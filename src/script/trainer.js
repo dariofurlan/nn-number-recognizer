@@ -111,7 +111,7 @@ export default class Trainer extends EventEmitter {
         let ns = Math.sqrt(this.X.length);
 
         let bound = {
-            start: {
+            x: {
                 min: ns,
                 max: 0
             }, y: {
@@ -123,10 +123,10 @@ export default class Trainer extends EventEmitter {
             for (let x = ns - 1; x >= 0; x--) {
                 let pos = (y * ns) + x;
                 if (this.X[pos] !== 0) {
-                    if (x > bound.start.max)
-                        bound.start.max = x;
-                    if (x < bound.start.min)
-                        bound.start.min = x;
+                    if (x > bound.x.max)
+                        bound.x.max = x;
+                    if (x < bound.x.min)
+                        bound.x.min = x;
                     if (y > bound.y.max)
                         bound.y.max = y;
                     if (y < bound.y.min)
@@ -135,33 +135,30 @@ export default class Trainer extends EventEmitter {
             }
         }
 
-
-        console.log(bound);
         let max = ns - 1;
         let delta = {
-            start: {
-                right: max - bound.start.max,
-                left: bound.start.min
+            x: {
+                right: max - bound.x.max,
+                left: bound.x.min
             }, y: {
                 down: max - bound.y.max,
                 up: bound.y.min
             }
         };
-        console.log(delta);
 
         let move = (delta_x=0, delta_y=0) => {
-            let loop_x = {
-                start: (delta_x > 0) ? (ns - 1) : 0,
-                condition: (delta_x > 0) ? (x) => {return x >= 0} : (x) => {return x < ns },
-                border_check: (delta_x > 0) ? (x) => {return x+delta_x > (ns - 1)} : (x) => { return x+delta_x < 0 },
-                inc: (delta_x > 0) ? -1 : +1,
-            };
-
             let loop_y = {
                 start: (delta_y > 0) ? (ns - 1) : 0,
                 condition: (delta_y > 0) ? (y) => {return y >= 0} : (y) => {return y < ns },
                 border_check: (delta_y > 0) ? (y) => {return y+delta_y > (ns - 1)} : (y) => { return y+delta_y < 0 },
                 inc: (delta_y > 0) ? -1 : +1,
+            };
+
+            let loop_x = {
+                start: (delta_x > 0) ? (ns - 1) : 0,
+                condition: (delta_x > 0) ? (x) => {return x >= 0} : (x) => {return x < ns },
+                border_check: (delta_x > 0) ? (x) => {return x+delta_x > (ns - 1)} : (x) => { return x+delta_x < 0 },
+                inc: (delta_x > 0) ? -1 : +1,
             };
 
             for (let y = loop_y.start; loop_y.condition(y); y+= loop_y.inc) {
@@ -190,7 +187,7 @@ export default class Trainer extends EventEmitter {
             }
         };
 
-
+        move(-delta.x.left,-delta.y.up);
         this.update();
 
         // randomly change opacity

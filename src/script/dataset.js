@@ -34,7 +34,6 @@ export default function Dataset() {
     };
 
     this.import_dataset = (dataset_obj) => {
-        this.dataset = {};
         for (let num_key in dataset_obj) {
             let num_data = dataset_obj[num_key];
             for (let i = 0; i < num_data.length; i++) {

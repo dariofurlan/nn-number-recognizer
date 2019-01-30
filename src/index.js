@@ -2,13 +2,15 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './style/style.scss';
 
 import {Drawer,Trainer} from './script/drawer';
-import Dataset from './script/dataset';
 
 // TODO  sistemare il problema del disegno su chrome e cellulari, migliorare quindi gli eventi del mouse, touch, pointer quello che è
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
+// TODO  draw_on_grid with coordinates instead of event
 // TODO  load pre drawn numbers
 // TODO  prepare and download function inside drawer
 // TODO  finally create all error messages for the whole project
+// TODO  move the augmentation function to dataset?
+// TODO  make the dataset an Array so that is more useful to pick random in order to train the NN
 
 
 /* ----------------------------------REFS--------------------------------- */
@@ -19,19 +21,10 @@ const msg_list = document.getElementById('msg-list');
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
-//new CreateDataset().start();
-new Test().start();
+new CreateDataset().start();
+// new TestFeature().start();
+// new Loader_n_Trainer().start();
 /* -------------------------------FUNCTIONS------------------------------- */
-
-function load() {
-    let oReq = new XMLHttpRequest();
-    oReq.onload = () => {
-        let dataset = JSON.parse(oReq.responseText);
-        console.log(dataset);
-    };
-    oReq.open("GET", "http://0.0.0.0:8000/dataset/dataset_2019-01-28T18-11-25.979Z_dario.json");
-    oReq.send();
-}
 
 function CreateDataset() {
     let Y = Trainer.get_train_Y();
@@ -81,7 +74,7 @@ function CreateDataset() {
     };
 }
 
-function Test() {
+function TestFeature() {
     let y;
     drawer.removeAllListeners("drawing");
     drawer.removeAllListeners("timer progress");
@@ -133,6 +126,44 @@ function Test() {
         step_0();
         //msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
     };
+}
+
+function Loader_n_Trainer() {
+
+    this.start = ()=> {
+        load().then(dataset => {
+            drawer.trainer.dataset.import_dataset(dataset);
+
+        });
+    };
+
+    let load = () => {
+        return new Promise((resolve, reject) => {
+            let oReq = new XMLHttpRequest();
+            oReq.onload = () => {
+                let dataset = JSON.parse(oReq.responseText);
+                resolve(dataset);
+            };
+            oReq.onerror = () => {
+                reject("Errore");
+            };
+            oReq.open("GET", "http://iofurlan.github.io/nn-number-recognizer/dataset/dataset.json");
+            oReq.send();
+        });
+    }
+
+    /*
+    * load number by number
+    * augment number
+    * train each augmented number
+    *   |
+    *   +---> max_pooling
+    *   +---> training
+    */
+
+    let step_0 = () => {
+
+    }
 }
 
 
