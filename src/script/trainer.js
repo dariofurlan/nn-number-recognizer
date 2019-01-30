@@ -111,7 +111,7 @@ export default class Trainer extends EventEmitter {
         let ns = Math.sqrt(this.X.length);
 
         let bound = {
-            x: {
+            start: {
                 min: ns,
                 max: 0
             }, y: {
@@ -123,10 +123,10 @@ export default class Trainer extends EventEmitter {
             for (let x = ns - 1; x >= 0; x--) {
                 let pos = (y * ns) + x;
                 if (this.X[pos] !== 0) {
-                    if (x > bound.x.max)
-                        bound.x.max = x;
-                    if (x < bound.x.min)
-                        bound.x.min = x;
+                    if (x > bound.start.max)
+                        bound.start.max = x;
+                    if (x < bound.start.min)
+                        bound.start.min = x;
                     if (y > bound.y.max)
                         bound.y.max = y;
                     if (y < bound.y.min)
@@ -139,9 +139,9 @@ export default class Trainer extends EventEmitter {
         console.log(bound);
         let max = ns - 1;
         let delta = {
-            x: {
-                right: max - bound.x.max,
-                left: bound.x.min
+            start: {
+                right: max - bound.start.max,
+                left: bound.start.min
             }, y: {
                 down: max - bound.y.max,
                 up: bound.y.min
@@ -149,67 +149,49 @@ export default class Trainer extends EventEmitter {
         };
         console.log(delta);
 
-        // moveX
-        let move_right = (delta) => {
-            if (delta === 0)
-                return;
-            let coll = {top: false, bottom: false, left: false, right: false};
-            for (let y = 0; y < ns; y++) {
-                for (let x = ns - 1; x >= 0; x--) {
+        let move = (delta_x=0, delta_y=0) => {
+            let loop_x = {
+                start: (delta_x > 0) ? (ns - 1) : 0,
+                condition: (delta_x > 0) ? (x) => {return x >= 0} : (x) => {return x < ns },
+                border_check: (delta_x > 0) ? (x) => {return x+delta_x > (ns - 1)} : (x) => { return x+delta_x < 0 },
+                inc: (delta_x > 0) ? -1 : +1,
+            };
+
+            let loop_y = {
+                start: (delta_y > 0) ? (ns - 1) : 0,
+                condition: (delta_y > 0) ? (y) => {return y >= 0} : (y) => {return y < ns },
+                border_check: (delta_y > 0) ? (y) => {return y+delta_y > (ns - 1)} : (y) => { return y+delta_y < 0 },
+                inc: (delta_y > 0) ? -1 : +1,
+            };
+
+            for (let y = loop_y.start; loop_y.condition(y); y+= loop_y.inc) {
+                for (let x = loop_x.start; loop_x.condition(x); x += loop_x.inc) {
                     let pos = (y * ns) + x;
                     if (this.X[pos] === 0)
                         continue;
-                    if (x === ns - 1 || x + delta < 0 || x + delta > ns) {
-                        // sono a destra
-                        this.X[pos] = 0;
-                    } else {
-                        // posso spostarmi tranquillamente a destra
-                        this.X[pos + delta] = this.X[pos];
-                        this.X[pos] = 0;
+                    if (delta_x !== 0) {
+                        if (loop_x.border_check(x)) {
+                            this.X[pos] = 0;
+                        } else {
+                            this.X[pos + delta_x] = this.X[pos];
+                            this.X[pos] = 0;
+                            pos+=delta_x;
+                        }
+                    }
+                    if (delta_y !== 0) {
+                        if (loop_y.border_check(y)) {
+                            this.X[pos] = 0;
+                        } else {
+                            this.X[pos + (delta_y * ns)] = this.X[pos];
+                            this.X[pos] = 0;
+                        }
                     }
                 }
             }
         };
-        let move_left = (delta) => {
-            if (delta===0)
-                return;
-            let coll = {top: false, bottom: false, left: false, right: false};
-            for (let y = 0; y < ns; y++) {
-                for (let x = 0; x < ns; x++) {
-                    let pos = (y * ns) + x;
-                    if (this.X[pos] === 0)
-                        continue;
-                    if (x === 0 || x + delta < 0 || x + delta > ns) {
-                        this.X[pos] = 0;
-                    } else {
-                        this.X[pos + delta] = this.X[pos];
-                        this.X[pos] = 0;
-                    }
-                }
-            }
-        };
-        let move_up = (delta) => {
-        };
 
 
-        /*for (let x_l = -delta.x.left; x_l < 0; x_l++) {
-            console.log(x_l);
-            move_left(x_l);
-            this.update();
-        }*/
-
-        /*let moveY = () => {
-            if (pos <= (ns - 1)) {
-                coll.top = true;
-            }
-            if (pos >= this.X.length - (ns - 1)) {
-                coll.bottom = true;
-            }
-        };*/
-        move_left(-0);
         this.update();
-
-        // moveY
 
         // randomly change opacity
     }
