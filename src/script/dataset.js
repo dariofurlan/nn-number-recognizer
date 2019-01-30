@@ -30,9 +30,7 @@ export default function Dataset() {
         if (this.dataset[y] === undefined) {
             this.dataset[y] = [];
         }
-        console.log(X);
         this.dataset[y].push(X);
-        console.log(this.dataset[y][0]);
     };
 
     this.import_dataset = (dataset_obj) => {
@@ -40,7 +38,7 @@ export default function Dataset() {
         for (let num_key in dataset_obj) {
             let num_data = dataset_obj[num_key];
             for (let i = 0; i < num_data.length; i++) {
-                this.add_data(num_key, Dataset.import(num_data[i]))
+                this.add(num_key, Dataset.import(num_data[i]))
             }
         }
     };

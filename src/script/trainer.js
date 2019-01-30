@@ -112,11 +112,11 @@ export default class Trainer extends EventEmitter {
 
         let bound = {
             x: {
-                min: null,
-                max: null
+                min: ns,
+                max: 0
             }, y: {
-                min: null,
-                max: null
+                min: ns,
+                max: 0
             }
         };
         for (let y = ns - 1; y >= 0; y--) {
@@ -125,19 +125,15 @@ export default class Trainer extends EventEmitter {
                 if (this.X[pos] !== 0) {
                     if (x > bound.x.max)
                         bound.x.max = x;
-                    else
+                    if (x < bound.x.min)
                         bound.x.min = x;
                     if (y > bound.y.max)
                         bound.y.max = y;
-                    else
+                    if (y < bound.y.min)
                         bound.y.min = y;
                 }
             }
         }
-        if (bound.x.min === null)
-            bound.x.min = bound.x.max;
-        if (bound.y.min === null)
-            bound.y.min = bound.y.max;
 
 
         console.log(bound);
@@ -153,32 +149,54 @@ export default class Trainer extends EventEmitter {
         };
         console.log(delta);
 
-
         // moveX
-        let moveX = (deltaX) => {
-            // TODO handle differents directions !!!!!!!!!!
+        let move_right = (delta) => {
+            if (delta === 0)
+                return;
             let coll = {top: false, bottom: false, left: false, right: false};
             for (let y = 0; y < ns; y++) {
                 for (let x = ns - 1; x >= 0; x--) {
                     let pos = (y * ns) + x;
                     if (this.X[pos] === 0)
                         continue;
-                    coll.top = coll.bottom = coll.left = coll.right = false;
-
-                    if (x === ns - 1) {
+                    if (x === ns - 1 || x + delta < 0 || x + delta > ns) {
                         // sono a destra
-                        this.X[pos] = 0;
-                    } else if (x === 0) {
-                        // sono a sinistra
                         this.X[pos] = 0;
                     } else {
                         // posso spostarmi tranquillamente a destra
-                        this.X[pos + deltaX] = this.X[pos];
+                        this.X[pos + delta] = this.X[pos];
                         this.X[pos] = 0;
                     }
                 }
             }
         };
+        let move_left = (delta) => {
+            if (delta===0)
+                return;
+            let coll = {top: false, bottom: false, left: false, right: false};
+            for (let y = 0; y < ns; y++) {
+                for (let x = 0; x < ns; x++) {
+                    let pos = (y * ns) + x;
+                    if (this.X[pos] === 0)
+                        continue;
+                    if (x === 0 || x + delta < 0 || x + delta > ns) {
+                        this.X[pos] = 0;
+                    } else {
+                        this.X[pos + delta] = this.X[pos];
+                        this.X[pos] = 0;
+                    }
+                }
+            }
+        };
+        let move_up = (delta) => {
+        };
+
+
+        /*for (let x_l = -delta.x.left; x_l < 0; x_l++) {
+            console.log(x_l);
+            move_left(x_l);
+            this.update();
+        }*/
 
         /*let moveY = () => {
             if (pos <= (ns - 1)) {
@@ -188,7 +206,7 @@ export default class Trainer extends EventEmitter {
                 coll.bottom = true;
             }
         };*/
-        moveX(+1);
+        move_left(-0);
         this.update();
 
         // moveY
@@ -211,7 +229,7 @@ export default class Trainer extends EventEmitter {
      * @param X the array of the number draw
      */
     add_data(y, X) {
-        this.dataset.add(y,X);
+        this.dataset.add(y, X);
     }
 
     import_into_X(array) {

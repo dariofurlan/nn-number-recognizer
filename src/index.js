@@ -19,7 +19,8 @@ const msg_list = document.getElementById('msg-list');
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
-new Train().draw_new_number();
+//new CreateDataset().start();
+new Test().start();
 /* -------------------------------FUNCTIONS------------------------------- */
 
 function load() {
@@ -32,7 +33,7 @@ function load() {
     oReq.send();
 }
 
-function Train() {
+function CreateDataset() {
     let Y = Trainer.get_train_Y();
     let i = 0;
     let c = 0;
@@ -45,11 +46,15 @@ function Train() {
     drawer.on("drawing", () => drawer.reset_timer());
     drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
     drawer.on("timer end", () => {
-        this.augment();
+        augment();
         drawer.update_progress_timer(0);
     });
 
-    this.draw_new_number = () => {
+    this.start = () => {
+        draw_new_number();
+    };
+
+    let draw_new_number = () => {
         if (i > Y.length - 1) {
             c++;
             i = 0;
@@ -65,35 +70,29 @@ function Train() {
         drawer.enable();
     };
 
-    this.augment = () => {
+    let augment = () => {
         drawer.disable();
         drawer.update_progress_train(Math.floor((c*max_c+i+1)*100/(Y.length * max_c))); // ToDo fix this percentage, please
         drawer.trainer.add_X(Y[i]);
         //trainer.augment();
+        console.log(drawer.trainer.dataset.dataset);
         i++;
-        this.draw_new_number();
-    };
-
-    this.train = () => {
-        console.log("training...");
-
+        draw_new_number();
     };
 }
 
 function Test() {
-    this.timeout = null;
-
-    let cb = () => {
-        console.log("test");
-        if (!drawer.enabled)
-            return;
-        if (this.timeout != null) {
-            clearTimeout(this.timeout);
-        }
-        this.timeout = setTimeout(step_1, TIME_TO_DRAW);
-    };
+    let y;
     drawer.removeAllListeners("drawing");
-    drawer.on("drawing", cb);
+    drawer.removeAllListeners("timer progress");
+    drawer.removeAllListeners("timer end");
+
+    drawer.on("drawing", () => drawer.reset_timer());
+    drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
+    drawer.on("timer end", () => {
+        step_1();
+        drawer.update_progress_timer(0);
+    });
 
     this.start = () => {
         step_0();
@@ -102,20 +101,25 @@ function Test() {
     // start drawing
     let step_0 = () => {
         //console.log("step_0");
-        trainer.reset();
-        msg_y.innerText = Trainer.get_test_y();
-        this.timeout = null;
-        drawer.enabled = true;
+        drawer.trainer.reset();
+        y = Trainer.get_test_y();
+        msg_y.innerText = y;
+        drawer.enable();
     };
     // ended drawing: pooling
     let step_1 = () => {
         //console.log("step_1");
-        drawer.enabled = false;
-        trainer.max_pooling();
-        setTimeout(step_2, 250);
+        drawer.disable();
+        drawer.trainer.augment();
+        //setTimeout(step_2, 250);
     };
     // test and output
     let step_2 = () => {
+
+        step_0();
+    };
+
+    let old_step2 = () => {
         let pred = trainer.test();
         //error = Math.round(error * 1000000) / 10000;
         msg_list.innerHTML = "";
