@@ -41,7 +41,7 @@ export default function Dataset() {
         for (let num_key in dataset_obj) {
             let num_data = dataset_obj[num_key];
             for (let i = 0; i < num_data.length; i++) {
-                this.add(num_key, this._import(num_data[i]))
+                this.add(num_key, this._import(num_data[i]));
             }
         }
     };
@@ -51,8 +51,7 @@ export default function Dataset() {
         for (let key in this.dataset) {
             n_dataset[key] = [];
             for (let i = 0; i < this.dataset[key].length; i++) {
-                let exported = this.dataset[key][i].join('');
-                console.log(exported);
+                let exported = this._export(this.dataset[key][i]);
                 n_dataset[key][i] = exported;
             }
         }

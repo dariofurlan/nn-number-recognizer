@@ -10,7 +10,7 @@ import {Drawer, Trainer} from './script/drawer';
 // TODO  finally create all error messages for the whole project
 // TODO  move the augmentation function to dataset?
 // TODO  make the dataset an Array so that is more useful to pick random in order to train the NN
-
+// TODO  craete animation of the dataset once loaded that scroll all the array to show all the training data
 
 /* ----------------------------------REFS--------------------------------- */
 const msg_y = document.getElementById('msg-y');
@@ -29,7 +29,7 @@ function CreateDataset() {
     let Y = Trainer.get_train_Y();
     let i = 0;
     let c = 0;
-    let max_c = 1;
+    let max_c = 5;
 
     drawer.removeAllListeners("drawing");
     drawer.removeAllListeners("timer progress");
@@ -52,19 +52,9 @@ function CreateDataset() {
                 let reader = new FileReader();
                 reader.onload = (e) => {
                     let content = e.target.result;
-                    try {
-                        let parsed = JSON.parse(content);
-                        console.log(parsed);
-                        for (let key in parsed) {
-                            for (let j=0;j<parsed[key];j++) {
-                                if (parsed[key][j].length)
-                            }
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        // TODO  handle error
+                    if (Trainer.test_file_integrity(content)) {
+                        drawer.trainer.dataset.import_dataset(JSON.parse(content));
                     }
-
                 };
 
                 reader.readAsText(f);

@@ -37,7 +37,6 @@ export default class Trainer extends EventEmitter {
     static test_file_integrity(content) {
         try {
             let parsed = JSON.parse(content);
-            console.log(parsed);
             for (let key in parsed) {
                 for (let j = 0; j < parsed[key]; j++) {
                     if (parsed[key][j].length !== INITIAL_SIZE*INITIAL_SIZE) {
@@ -251,7 +250,6 @@ export default class Trainer extends EventEmitter {
     }
 
     add_X(y) {
-        console.log(y + "___" + this.X);
         this.dataset.add(y, this.X);
     }
 
