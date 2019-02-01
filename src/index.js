@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './style/style.scss';
 
-import {Drawer,Trainer} from './script/drawer';
+import {Drawer, Trainer} from './script/drawer';
 
 // TODO  sistemare il problema del disegno su chrome e cellulari, migliorare quindi gli eventi del mouse, touch, pointer quello che è
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
@@ -21,8 +21,9 @@ const msg_list = document.getElementById('msg-list');
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
-new CreateDataset().start();
-// new TestFeature().start();
+
+// new CreateDataset().start();
+new TestFeature().start();
 // new Loader_n_Trainer().start();
 /* -------------------------------FUNCTIONS------------------------------- */
 
@@ -30,7 +31,7 @@ function CreateDataset() {
     let Y = Trainer.get_train_Y();
     let i = 0;
     let c = 0;
-    let max_c = 10;
+    let max_c = 1;
 
     drawer.removeAllListeners("drawing");
     drawer.removeAllListeners("timer progress");
@@ -51,10 +52,9 @@ function CreateDataset() {
         if (i > Y.length - 1) {
             c++;
             i = 0;
-            drawer.download();
         }
         if (c === max_c) {
-            drawer.download();
+            drawer.trainer.dataset.export_n_download();
             drawer.trainer.reset();
             return;
         }
@@ -65,10 +65,9 @@ function CreateDataset() {
 
     let augment = () => {
         drawer.disable();
-        drawer.update_progress_train(Math.floor((c*max_c+i+1)*100/(Y.length * max_c))); // ToDo fix this percentage, please
+        drawer.update_progress_train(Math.floor((c * max_c + i + 1) * 100 / (Y.length * max_c))); // ToDo fix this percentage, please
         drawer.trainer.add_X(Y[i]);
         //trainer.augment();
-        console.log(drawer.trainer.dataset.dataset);
         i++;
         draw_new_number();
     };
@@ -112,7 +111,7 @@ function TestFeature() {
         step_0();
     };
 
-    let old_step2 = () => {
+    /*let old_step2 = () => {
         let pred = trainer.test();
         //error = Math.round(error * 1000000) / 10000;
         msg_list.innerHTML = "";
@@ -125,12 +124,12 @@ function TestFeature() {
         msg_list.innerHTML = "al <b>" + acc + "</b>% il numero disegnato è: <b>" + best_pred + "</b>";
         step_0();
         //msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
-    };
+    };*/
 }
 
 function Loader_n_Trainer() {
 
-    this.start = ()=> {
+    this.start = () => {
         load().then(dataset => {
             drawer.trainer.dataset.import_dataset(dataset);
 

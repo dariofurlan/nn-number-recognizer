@@ -14,13 +14,17 @@ function download(text) {
 }
 
 export default function Dataset() {
+    // private var
+    let augmented = false;
+
+    //public var
     this.dataset = {};
 
-    Dataset.prototype.export = (arr) => {
+    this._export = (arr) => {
         return arr.join("");
     };
 
-    Dataset.prototype.import = (array_str) => {
+    this._import = (array_str) => {
         return array_str.split("");
     };
 
@@ -30,14 +34,14 @@ export default function Dataset() {
         if (this.dataset[y] === undefined) {
             this.dataset[y] = [];
         }
-        this.dataset[y].push(X);
+        this.dataset[y].push(X.slice());
     };
 
     this.import_dataset = (dataset_obj) => {
         for (let num_key in dataset_obj) {
             let num_data = dataset_obj[num_key];
             for (let i = 0; i < num_data.length; i++) {
-                this.add(num_key, Dataset.import(num_data[i]))
+                this.add(num_key, this._import(num_data[i]))
             }
         }
     };
@@ -47,10 +51,12 @@ export default function Dataset() {
         for (let key in this.dataset) {
             n_dataset[key] = [];
             for (let i = 0; i < this.dataset[key].length; i++) {
-                n_dataset[key][i] = Dataset.export(this.dataset[key][i]);
+                let exported = this.dataset[key][i].join('');
+                console.log(exported);
+                n_dataset[key][i] = exported;
             }
         }
-        return JSON.stringify(n_dataset);
+        return n_dataset;
     };
 
     this.export_n_download = () => {

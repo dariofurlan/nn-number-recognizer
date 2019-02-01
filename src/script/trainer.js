@@ -147,48 +147,68 @@ export default class Trainer extends EventEmitter {
         };
 
         let move = (delta_x=0, delta_y=0) => {
+            // return new array, DON'T MODIFY THE ORIGINAL ONE
+            const X = this.X.slice();
             let loop_y = {
                 start: (delta_y > 0) ? (ns - 1) : 0,
                 condition: (delta_y > 0) ? (y) => {return y >= 0} : (y) => {return y < ns },
                 border_check: (delta_y > 0) ? (y) => {return y+delta_y > (ns - 1)} : (y) => { return y+delta_y < 0 },
                 inc: (delta_y > 0) ? -1 : +1,
             };
-
             let loop_x = {
                 start: (delta_x > 0) ? (ns - 1) : 0,
                 condition: (delta_x > 0) ? (x) => {return x >= 0} : (x) => {return x < ns },
                 border_check: (delta_x > 0) ? (x) => {return x+delta_x > (ns - 1)} : (x) => { return x+delta_x < 0 },
                 inc: (delta_x > 0) ? -1 : +1,
             };
-
             for (let y = loop_y.start; loop_y.condition(y); y+= loop_y.inc) {
                 for (let x = loop_x.start; loop_x.condition(x); x += loop_x.inc) {
                     let pos = (y * ns) + x;
-                    if (this.X[pos] === 0)
+                    if (X[pos] === 0)
                         continue;
                     if (delta_x !== 0) {
                         if (loop_x.border_check(x)) {
-                            this.X[pos] = 0;
+                            X[pos] = 0;
                         } else {
-                            this.X[pos + delta_x] = this.X[pos];
-                            this.X[pos] = 0;
+                            X[pos + delta_x] = X[pos];
+                            X[pos] = 0;
                             pos+=delta_x;
                         }
                     }
                     if (delta_y !== 0) {
                         if (loop_y.border_check(y)) {
-                            this.X[pos] = 0;
+                            X[pos] = 0;
                         } else {
-                            this.X[pos + (delta_y * ns)] = this.X[pos];
-                            this.X[pos] = 0;
+                            X[pos + (delta_y * ns)] = X[pos];
+                            X[pos] = 0;
                         }
                     }
                 }
             }
+            return X;
         };
 
-        move(-delta.x.left,-delta.y.up);
-        this.update();
+        let original_X = this.X.slice();
+        let xl = -delta.x.left;
+        let aa= ()=> {
+            if (xl>=0)
+                return;
+            console.log(xl);
+            this.import_into_X(original_X);
+            let new_X = move(xl,0);
+            this.import_into_X(new_X);
+            this.update();
+            xl++;
+            setTimeout(aa,1000);
+        };
+        aa();
+
+        /*for(let xl=-delta.x.left;xl<0;xl++) {
+            console.log(xl);
+        }*/
+
+        /*move(-delta.x.left,-delta.y.up);
+        this.update();*/
 
         // randomly change opacity
     }
@@ -198,22 +218,16 @@ export default class Trainer extends EventEmitter {
     }
 
     add_X(y) {
-        this.add_data(y, this.X);
-    }
-
-    /**
-     * Add to dataset object a draw of a number, to later download, store or use it for training
-     *
-     * @param y the number
-     * @param X the array of the number draw
-     */
-    add_data(y, X) {
-        this.dataset.add(y, X);
+        console.log(y+"___"+this.X);
+        this.dataset.add(y,this.X);
     }
 
     import_into_X(array) {
         if (array.length !== this.size * this.size)
             throw new Error("Array size doesn't match");
+        for (let key in array) {
+            
+        }
         this.reset();
     }
 

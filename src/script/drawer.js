@@ -184,10 +184,6 @@ class Drawer extends EventEmitter {
         return pos;
     }
 
-    download() {
-        this.trainer.dataset.export_n_download();
-    }
-
     update_progress_train(percent) {
         this.general_progress_bar.style.width = percent + "%";
         this.general_progress_bar.innerText = "training: " + percent + "%";
