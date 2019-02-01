@@ -34,6 +34,23 @@ export default class Trainer extends EventEmitter {
         return Math.floor(Math.random() * NUM_NUM);
     }
 
+    static test_file_integrity(content) {
+        try {
+            let parsed = JSON.parse(content);
+            console.log(parsed);
+            for (let key in parsed) {
+                for (let j = 0; j < parsed[key]; j++) {
+                    if (parsed[key][j].length !== INITIAL_SIZE*INITIAL_SIZE) {
+                        return false;
+                    }
+                }
+            }
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
     avg_pooling() {
         if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
             return false;
@@ -146,22 +163,38 @@ export default class Trainer extends EventEmitter {
             }
         };
 
-        let move = (delta_x=0, delta_y=0) => {
+        let move = (delta_x = 0, delta_y = 0) => {
             // return new array, DON'T MODIFY THE ORIGINAL ONE
             const X = this.X.slice();
             let loop_y = {
                 start: (delta_y > 0) ? (ns - 1) : 0,
-                condition: (delta_y > 0) ? (y) => {return y >= 0} : (y) => {return y < ns },
-                border_check: (delta_y > 0) ? (y) => {return y+delta_y > (ns - 1)} : (y) => { return y+delta_y < 0 },
+                condition: (delta_y > 0) ? (y) => {
+                    return y >= 0
+                } : (y) => {
+                    return y < ns
+                },
+                border_check: (delta_y > 0) ? (y) => {
+                    return y + delta_y > (ns - 1)
+                } : (y) => {
+                    return y + delta_y < 0
+                },
                 inc: (delta_y > 0) ? -1 : +1,
             };
             let loop_x = {
                 start: (delta_x > 0) ? (ns - 1) : 0,
-                condition: (delta_x > 0) ? (x) => {return x >= 0} : (x) => {return x < ns },
-                border_check: (delta_x > 0) ? (x) => {return x+delta_x > (ns - 1)} : (x) => { return x+delta_x < 0 },
+                condition: (delta_x > 0) ? (x) => {
+                    return x >= 0
+                } : (x) => {
+                    return x < ns
+                },
+                border_check: (delta_x > 0) ? (x) => {
+                    return x + delta_x > (ns - 1)
+                } : (x) => {
+                    return x + delta_x < 0
+                },
                 inc: (delta_x > 0) ? -1 : +1,
             };
-            for (let y = loop_y.start; loop_y.condition(y); y+= loop_y.inc) {
+            for (let y = loop_y.start; loop_y.condition(y); y += loop_y.inc) {
                 for (let x = loop_x.start; loop_x.condition(x); x += loop_x.inc) {
                     let pos = (y * ns) + x;
                     if (X[pos] === 0)
@@ -172,7 +205,7 @@ export default class Trainer extends EventEmitter {
                         } else {
                             X[pos + delta_x] = X[pos];
                             X[pos] = 0;
-                            pos+=delta_x;
+                            pos += delta_x;
                         }
                     }
                     if (delta_y !== 0) {
@@ -190,16 +223,16 @@ export default class Trainer extends EventEmitter {
 
         let original_X = this.X.slice();
         let xl = -delta.x.left;
-        let aa= ()=> {
-            if (xl>=0)
+        let aa = () => {
+            if (xl >= 0)
                 return;
             console.log(xl);
             this.import_into_X(original_X);
-            let new_X = move(xl,0);
+            let new_X = move(xl, 0);
             this.import_into_X(new_X);
             this.update();
             xl++;
-            setTimeout(aa,1000);
+            setTimeout(aa, 1000);
         };
         aa();
 
@@ -218,17 +251,17 @@ export default class Trainer extends EventEmitter {
     }
 
     add_X(y) {
-        console.log(y+"___"+this.X);
-        this.dataset.add(y,this.X);
+        console.log(y + "___" + this.X);
+        this.dataset.add(y, this.X);
     }
 
     import_into_X(array) {
         if (array.length !== this.size * this.size)
             throw new Error("Array size doesn't match");
-        for (let key in array) {
-            
-        }
         this.reset();
+        for (let i = 0; i < array.length; i++) {
+            this.X[i] = array[i];
+        }
     }
 
     test() {

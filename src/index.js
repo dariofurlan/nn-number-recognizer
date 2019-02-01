@@ -7,7 +7,6 @@ import {Drawer, Trainer} from './script/drawer';
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
 // TODO  draw_on_grid with coordinates instead of event
 // TODO  load pre drawn numbers
-// TODO  prepare and download function inside drawer
 // TODO  finally create all error messages for the whole project
 // TODO  move the augmentation function to dataset?
 // TODO  make the dataset an Array so that is more useful to pick random in order to train the NN
@@ -16,17 +15,16 @@ import {Drawer, Trainer} from './script/drawer';
 /* ----------------------------------REFS--------------------------------- */
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
-
+const btn1 = document.getElementById('btn1');
 
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
 
-// new CreateDataset().start();
-new TestFeature().start();
+new CreateDataset().init();
+// new TestFeature().start();
 // new Loader_n_Trainer().start();
 /* -------------------------------FUNCTIONS------------------------------- */
-
 function CreateDataset() {
     let Y = Trainer.get_train_Y();
     let i = 0;
@@ -44,8 +42,56 @@ function CreateDataset() {
         drawer.update_progress_timer(0);
     });
 
-    this.start = () => {
-        draw_new_number();
+    this.init = () => {
+        let input_file = document.createElement('input');
+        input_file.type = "file";
+        input_file.onchange = (evt) => {
+            let files = evt.target.files;
+            for (let i = 0; i < files.length; i++) {
+                let f = files[i];
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    let content = e.target.result;
+                    try {
+                        let parsed = JSON.parse(content);
+                        console.log(parsed);
+                        for (let key in parsed) {
+                            for (let j=0;j<parsed[key];j++) {
+                                if (parsed[key][j].length)
+                            }
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        // TODO  handle error
+                    }
+
+                };
+
+                reader.readAsText(f);
+            }
+        };
+        input_file.style.display = "none";
+
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Load Dataset";
+        btn1.onclick = () => {
+            input_file.click();
+            start();
+        };
+        //btn1.parentNode.insertBefore(hiddden_input,btn1.nextSibling);
+    };
+
+    let start = () => {
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Download Dataset";
+        btn1.onclick = () => {
+            drawer.trainer.dataset.export_n_download();
+        };
+        draw_new_number()
     };
 
     let draw_new_number = () => {

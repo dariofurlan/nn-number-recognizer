@@ -15,7 +15,7 @@ function download(text) {
 
 export default function Dataset() {
     // private var
-    let augmented = false;
+    let augmented = false; // augment only once, twice is not needed and useless
 
     //public var
     this.dataset = {};
