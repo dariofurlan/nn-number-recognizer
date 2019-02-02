@@ -4,13 +4,17 @@ import './style/style.scss';
 import {Drawer, Trainer, LoadingOverlay} from './script/drawer';
 
 // TODO  sistemare il problema del disegno su chrome e cellulari, migliorare quindi gli eventi del mouse, touch, pointer quello che è
+// TODO  create class that handles events in drawer
+// TODO  creare un gist con un handler globale
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
 // TODO  draw_on_grid with coordinates instead of event
-// TODO  load pre drawn numbers
 // TODO  finally create all error messages for the whole project
-// TODO  move the augmentation function to dataset?
-// TODO  make the dataset an Array so that is more useful to pick random in order to train the NN
+// TODO  move the augmentation function to dataset?!
+// TODO  make the dataset an Array before learning phase so that is more useful to pick random in order to train the NN
 // TODO  craete animation of the dataset once loaded that scroll all the array to show all the training data
+// TODO  let the drawer control the overlay, the progress bar, the canvas, insomma tutto il suo riquadro
+// TODO  make the first "page" with all the buttons ( 6ix buttons) with all the actions, draw new number, merge dataset, show dataset, approve dataset, test new feature, and loader and trainer
+// TODO  make sometype of navigation bar
 
 /* ----------------------------------REFS--------------------------------- */
 const msg_y = document.getElementById('msg-y');
@@ -23,7 +27,7 @@ const load_over = new LoadingOverlay();
 
 
 // new CreateDataset().init();
-// new TestFeature().start();
+new TestFeature().start();
 // new Loader_n_Trainer().start();
 // new MergeDataset().init();
 

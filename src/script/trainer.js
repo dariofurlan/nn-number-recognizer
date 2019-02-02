@@ -50,6 +50,7 @@ export default class Trainer extends EventEmitter {
         return true;
     }
 
+
     avg_pooling() {
         if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
             return false;
@@ -91,7 +92,6 @@ export default class Trainer extends EventEmitter {
             return Math.max.apply(null, array)
         };
         let convolve = (CONV_SIZE, edge_size, x, y) => {
-            // TODO for now do a simple average, later do with the kernel
             let pos = y * edge_size + x;
             let K = [];
             for (let ky = 0, kn = 0; ky < CONV_SIZE; ky++) {
