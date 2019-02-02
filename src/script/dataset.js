@@ -25,7 +25,7 @@ export default function Dataset() {
     };
 
     this._import = (array_str) => {
-        return array_str.split("");
+        return array_str.split("").map(Number);
     };
 
     this.add = (y, X)=> {

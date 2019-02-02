@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './style/style.scss';
 
-import {Drawer, Trainer} from './script/drawer';
+import {Drawer, Trainer, LoadingOverlay} from './script/drawer';
 
 // TODO  sistemare il problema del disegno su chrome e cellulari, migliorare quindi gli eventi del mouse, touch, pointer quello che è
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
@@ -19,14 +19,16 @@ const btn_group = document.getElementById('btn-group');
 
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
+const load_over = new LoadingOverlay();
 
 
-//new CreateDataset().init();
+// new CreateDataset().init();
 // new TestFeature().start();
 // new Loader_n_Trainer().start();
-new MergeDataset().init();
+// new MergeDataset().init();
 
 /* -------------------------------FUNCTIONS------------------------------- */
+
 function CreateDataset() {
     let btn1 = document.createElement("button");
     btn_group.appendChild(btn1);
@@ -121,7 +123,6 @@ function MergeDataset() {
     let d;
 
     btn_group.appendChild(btn1);
-    btn_group.appendChild(btn2);
 
     drawer.removeAllListeners("timer progress");
     drawer.removeAllListeners("timer end");
@@ -130,6 +131,8 @@ function MergeDataset() {
     drawer.on("timer end", () => {
         drawer.update_progress_timer(0);
     });
+    drawer.disable();
+    document.getElementById('canvas-header').hidden=true;
 
     this.init = () => {
         let input_file = document.createElement('input');
@@ -160,42 +163,50 @@ function MergeDataset() {
         };
     };
 
-    let start = () => {
+    let import_or_not = () => {
+        btn_group.appendChild(btn2);
         btn1.hidden = false;
         btn1.disabled = false;
         btn1.className = "btn btn-success";
         btn1.innerText = "Import";
-        btn1.onclick = () => {
-            // ok
-        };
+
         btn2.hidden = false;
         btn2.disabled = false;
         btn2.className = "btn btn-danger";
-        btn2.innerText = "Drop";
-        btn2.onclick = () => {
-            // dropped
-        };
-    };
-
-    let import_or_not = (d) => {
-        let keys = Object.keys(d);
+        btn2.innerText = "Skip";
         let k = 0;
         let i = 0;
+
         function loop() {
-            if (i>=d["0"][i].length) {
+            if (i >= d[k].length) {
+                i = 0;
+                k++;
+            }
+            if (k >= Object.keys(d).length) {
+                btn1.hidden = false;
+                btn1.disabled = false;
+                btn1.className = "btn btn-outline-primary";
+                btn1.innerText = "Download Dataset";
+                btn1.onclick = () => {
+                    drawer.trainer.dataset.export_n_download();
+                };
+                btn_group.removeChild(btn2);
                 return;
             }
-            console.log(d["0"][i]);
+            let imported = drawer.trainer.dataset._import(d[k][i]);
+            drawer.trainer.import_into_X(imported);
+            drawer.trainer.update();
+            btn1.onclick = () => {
+                drawer.trainer.dataset.add(k, imported);
+                loop();
+            };
+            btn2.onclick = () => {
+                loop();
+            };
             i++;
         }
+
         loop();
-
-        for (let key in d) {
-            for (let i = 0; i < d[key].length; i++) {
-                drawer.trainer.import_into_X(d[key].length);
-
-            }
-        }
     };
 }
 
@@ -254,6 +265,8 @@ function TestFeature() {
 }
 
 function Loader_n_Trainer() {
+    document.getElementById('canvas-header').hidden=true;
+
     this.start = () => {
         load().then(dataset => {
             drawer.trainer.dataset.import_dataset(dataset);

@@ -122,8 +122,7 @@ export default class Trainer extends EventEmitter {
     }
 
     augment() {
-        // calculate what types of movements its possible to do
-        // do all the combination to obtain more data
+
         let ns = Math.sqrt(this.X.length);
 
         let bound = {
@@ -221,6 +220,7 @@ export default class Trainer extends EventEmitter {
 
         let original_X = this.X.slice();
         let xl = -delta.x.left;
+        let xr = delta.x.right;
         let aa = () => {
             if (xl >= 0)
                 return;
@@ -232,7 +232,20 @@ export default class Trainer extends EventEmitter {
             xl++;
             setTimeout(aa, 500);
         };
-        aa();
+        for (let y=-delta.y.up;y<=delta.y.down;y++) {
+            if (y===0)
+                continue;
+            for (let x=-delta.x.left;x<=delta.x.right;x++) {
+                if (x===0)
+                    continue;
+                this.import_into_X(original_X);
+                let new_X = move(x, y);
+                this.import_into_X(new_X);
+                this.dataset.add(9,new_X);
+                this.update();
+            }
+        }
+        this.dataset.export_n_download();
 
         /*for(let xl=-delta.x.left;xl<0;xl++) {
             console.log(xl);
