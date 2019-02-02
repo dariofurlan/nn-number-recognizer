@@ -15,17 +15,23 @@ import {Drawer, Trainer} from './script/drawer';
 /* ----------------------------------REFS--------------------------------- */
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
-const btn1 = document.getElementById('btn1');
+const btn_group = document.getElementById('btn-group');
 
 /* -------------------------------VARIABLES------------------------------- */
 const drawer = new Drawer();
 
 
-// new CreateDataset().init();
-new TestFeature().start();
+//new CreateDataset().init();
+// new TestFeature().start();
 // new Loader_n_Trainer().start();
+new MergeDataset().init();
+
 /* -------------------------------FUNCTIONS------------------------------- */
 function CreateDataset() {
+    let btn1 = document.createElement("button");
+    btn_group.appendChild(btn1);
+
+
     let Y = Trainer.get_train_Y();
     let i = 0;
     let c = 0;
@@ -106,6 +112,90 @@ function CreateDataset() {
         //trainer.augment();
         i++;
         draw_new_number();
+    };
+}
+
+function MergeDataset() {
+    let btn1 = document.createElement('button');
+    let btn2 = document.createElement('button');
+    let d;
+
+    btn_group.appendChild(btn1);
+    btn_group.appendChild(btn2);
+
+    drawer.removeAllListeners("timer progress");
+    drawer.removeAllListeners("timer end");
+
+    drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
+    drawer.on("timer end", () => {
+        drawer.update_progress_timer(0);
+    });
+
+    this.init = () => {
+        let input_file = document.createElement('input');
+        input_file.type = "file";
+        input_file.onchange = (evt) => {
+            let files = evt.target.files;
+            for (let i = 0; i < files.length; i++) {
+                let f = files[i];
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    let content = e.target.result;
+                    if (Trainer.test_file_integrity(content)) {
+                        d = JSON.parse(content);
+                        import_or_not();
+                    }
+                };
+                reader.readAsText(f);
+            }
+        };
+        input_file.style.display = "none";
+
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Load Dataset";
+        btn1.onclick = () => {
+            input_file.click();
+        };
+    };
+
+    let start = () => {
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-success";
+        btn1.innerText = "Import";
+        btn1.onclick = () => {
+            // ok
+        };
+        btn2.hidden = false;
+        btn2.disabled = false;
+        btn2.className = "btn btn-danger";
+        btn2.innerText = "Drop";
+        btn2.onclick = () => {
+            // dropped
+        };
+    };
+
+    let import_or_not = (d) => {
+        let keys = Object.keys(d);
+        let k = 0;
+        let i = 0;
+        function loop() {
+            if (i>=d["0"][i].length) {
+                return;
+            }
+            console.log(d["0"][i]);
+            i++;
+        }
+        loop();
+
+        for (let key in d) {
+            for (let i = 0; i < d[key].length; i++) {
+                drawer.trainer.import_into_X(d[key].length);
+
+            }
+        }
     };
 }
 
