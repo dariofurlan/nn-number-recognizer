@@ -163,7 +163,6 @@ export default class Trainer extends EventEmitter {
         };
 
         let move = (delta_x = 0, delta_y = 0) => {
-            // return new array, DON'T MODIFY THE ORIGINAL ONE
             const X = this.X.slice();
             let loop_y = {
                 start: (delta_y > 0) ? (ns - 1) : 0,
@@ -231,7 +230,7 @@ export default class Trainer extends EventEmitter {
             this.import_into_X(new_X);
             this.update();
             xl++;
-            setTimeout(aa, 1000);
+            setTimeout(aa, 500);
         };
         aa();
 

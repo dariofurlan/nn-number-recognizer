@@ -21,8 +21,8 @@ const btn1 = document.getElementById('btn1');
 const drawer = new Drawer();
 
 
-new CreateDataset().init();
-// new TestFeature().start();
+// new CreateDataset().init();
+new TestFeature().start();
 // new Loader_n_Trainer().start();
 /* -------------------------------FUNCTIONS------------------------------- */
 function CreateDataset() {
@@ -164,11 +164,9 @@ function TestFeature() {
 }
 
 function Loader_n_Trainer() {
-
     this.start = () => {
         load().then(dataset => {
             drawer.trainer.dataset.import_dataset(dataset);
-
         });
     };
 
@@ -185,7 +183,7 @@ function Loader_n_Trainer() {
             oReq.open("GET", "http://iofurlan.github.io/nn-number-recognizer/dataset/dataset.json");
             oReq.send();
         });
-    }
+    };
 
     /*
     * load number by number
