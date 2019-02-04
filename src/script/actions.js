@@ -1,11 +1,10 @@
 /*
-new dataset
-merge dataset
-approve dataset
-clean duplicates todo do this in the dataset.js
+new dataset +
+merge dataset +
+approve dataset +
 show dataset
-test feature
-load_n_train
+test new feature +
+load_n_train +
 */
 import {Drawer, Trainer} from "./drawer";
 
@@ -42,8 +41,58 @@ function load_dataset() {
 
 /*-------------------------ACTIONS---------------------------*/
 drawer.disable();
+document.getElementById('canvas-header').hidden = true;
+
+export function ShowDataset() {
+    let btn1 = document.createElement("button");
+    btn_group.appendChild(btn1);
+
+    let loaded;
+
+    this.start = () => {
+        let input_file = document.createElement('input');
+        input_file.type = "file";
+        input_file.onchange = (evt) => {
+            let files = evt.target.files;
+            for (let i = 0; i < files.length; i++) {
+                let f = files[i];
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    let content = e.target.result;
+                    if (Trainer.test_file_integrity(content)) {
+                        loaded = JSON.parse(content);
+                        step_0();
+                    }
+                };
+
+                reader.readAsText(f);
+            }
+        };
+        input_file.style.display = "none";
+
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Load Dataset";
+        btn1.onclick = () => {
+            input_file.click();
+        };
+        //btn1.parentNode.insertBefore(hiddden_input,btn1.nextSibling);
+    };
+
+    let step_0 = () => {
+        let N = Object.keys(loaded);
+
+        let step_0_1 = () => {
+            
+        };
+
+
+    };
+}
 
 export function NewDataset() {
+    document.getElementById('canvas-header').hidden = false;
     let btn1 = document.createElement("button");
     btn_group.appendChild(btn1);
 
@@ -127,6 +176,85 @@ export function NewDataset() {
         //trainer.augment();
         i++;
         step_1();
+    };
+}
+
+export function MergeDataset() {
+    let btn1 = document.createElement('button');
+    btn_group.appendChild(btn1);
+
+    let file1 = "";
+    let file2 = "";
+    this.start = () => {
+        load_file1();
+    };
+
+    let load_file1 = () => {
+        let input_file = document.createElement('input');
+        input_file.type = "file";
+        input_file.onchange = (evt) => {
+            let files = evt.target.files;
+            for (let i = 0; i < files.length; i++) {
+                let f = files[i];
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    let content = e.target.result;
+                    if (Trainer.test_file_integrity(content)) {
+                        file1 = JSON.parse(content);
+                    }
+                };
+                reader.readAsText(f);
+            }
+        };
+        input_file.style.display = "none";
+
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Load Dataset 1";
+        btn1.onclick = () => {
+            input_file.click();
+            load_file2();
+        };
+    };
+
+    let load_file2 = () => {
+        let input_file = document.createElement('input');
+        input_file.type = "file";
+        input_file.onchange = (evt) => {
+            let files = evt.target.files;
+            for (let i = 0; i < files.length; i++) {
+                let f = files[i];
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    let content = e.target.result;
+                    if (Trainer.test_file_integrity(content)) {
+                        file2 = JSON.parse(content);
+                        merge();
+                    }
+                };
+                reader.readAsText(f);
+            }
+        };
+        input_file.style.display = "none";
+
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Load Dataset 2";
+        btn1.onclick = () => {
+            input_file.click();
+        };
+    };
+
+    let merge = () => {
+        btn_group.removeChild(btn1);
+        if (file1 !== "" && file2 !== "") {
+            drawer.trainer.dataset.import_dataset(file1);
+            drawer.trainer.dataset.import_dataset(file2);
+            console.log("merged");
+            drawer.trainer.dataset.download();
+        }
     };
 }
 
@@ -223,87 +351,9 @@ export function ApproveDataset() {
     };
 }
 
-export function MergeDataset() {
-    let btn1 = document.createElement('button');
-    btn_group.appendChild(btn1);
-
-    let file1 = "";
-    let file2 = "";
-    this.start = () => {
-        load_file1();
-    };
-
-    let load_file1 = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        file1 = JSON.parse(content);
-                    }
-                };
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
-        btn1.hidden = false;
-        btn1.disabled = false;
-        btn1.className = "btn btn-outline-primary";
-        btn1.innerText = "Load Dataset 1";
-        btn1.onclick = () => {
-            input_file.click();
-            load_file2();
-        };
-    };
-
-    let load_file2 = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        file2 = JSON.parse(content);
-                        merge();
-                    }
-                };
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
-        btn1.hidden = false;
-        btn1.disabled = false;
-        btn1.className = "btn btn-outline-primary";
-        btn1.innerText = "Load Dataset 2";
-        btn1.onclick = () => {
-            input_file.click();
-        };
-    };
-
-    let merge = () => {
-        btn_group.removeChild(btn1);
-        if (file1 !== "" && file2 !== "") {
-            drawer.trainer.dataset.import_dataset(file1);
-            drawer.trainer.dataset.import_dataset(file2);
-            console.log("merged");
-            drawer.trainer.dataset.download();
-        }
-    };
-}
-
 export function TestFeature() {
     let y;
+    document.getElementById('canvas-header').hidden = true;
     drawer.removeAllListeners("drawing");
     drawer.removeAllListeners("timer progress");
     drawer.removeAllListeners("timer end");
@@ -358,8 +408,7 @@ export function TestFeature() {
 }
 
 export function Loader_n_Trainer() {
-    document.getElementById('canvas-header').hidden = true;
-
+    document.getElementById('canvas-header').hidden = false;
     this.start = () => {
         load().then(dataset => {
             drawer.trainer.dataset.import_dataset(dataset);
