@@ -1,0 +1,29 @@
+#half-left {
+  margin-top: 10px;
+}
+
+#container {
+  margin: 20px;
+  width: 100px;
+  height: 100px;
+}
+
+#overlay {
+  position: fixed; /* Sit on top of the page content */
+  display: none; /* Hidden by default */
+  width: 100%; /* Full width (cover the whole page) */
+  height: 100%; /* Full height (cover the whole page) */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 2;
+}
+
+#text {
+  position: absolute;
+  top: 45%;
+  left: 45%;
+  color: black;
+}
