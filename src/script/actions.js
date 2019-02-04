@@ -41,6 +41,8 @@ function load_dataset() {
 
 
 /*-------------------------ACTIONS---------------------------*/
+drawer.disable();
+
 export function NewDataset() {
     let btn1 = document.createElement("button");
     btn_group.appendChild(btn1);
@@ -98,7 +100,7 @@ export function NewDataset() {
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Download Dataset";
         btn1.onclick = () => {
-            drawer.trainer.dataset.export_n_download();
+            drawer.trainer.dataset.download();
         };
         step_1()
     };
@@ -109,7 +111,7 @@ export function NewDataset() {
             i = 0;
         }
         if (c === max_c) {
-            drawer.trainer.dataset.export_n_download();
+            drawer.trainer.dataset.download();
             drawer.trainer.reset();
             return;
         }
@@ -199,7 +201,7 @@ export function ApproveDataset() {
                 btn1.className = "btn btn-outline-primary";
                 btn1.innerText = "Download Dataset";
                 btn1.onclick = () => {
-                    drawer.trainer.dataset.export_n_download();
+                    drawer.trainer.dataset.download();
                 };
                 btn_group.removeChild(btn2);
                 return;
@@ -295,7 +297,7 @@ export function MergeDataset() {
             drawer.trainer.dataset.import_dataset(file1);
             drawer.trainer.dataset.import_dataset(file2);
             console.log("merged");
-            drawer.trainer.dataset.export_n_download();
+            drawer.trainer.dataset.download();
         }
     };
 }
@@ -329,7 +331,8 @@ export function TestFeature() {
     let step_1 = () => {
         //console.log("step_1");
         drawer.disable();
-        drawer.trainer.augment();
+        drawer.trainer.add_X(y);
+        drawer.trainer.dataset.augment();
         //setTimeout(step_2, 250);
     };
     // test and output

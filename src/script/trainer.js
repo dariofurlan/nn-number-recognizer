@@ -243,7 +243,7 @@ export default class Trainer extends EventEmitter {
                 this.update();
             }
         }
-        this.dataset.export_n_download();
+        this.dataset.download();
     }
 
     update() {
