@@ -1,11 +1,3 @@
-/*
-new dataset +
-merge dataset +
-approve dataset +
-show dataset
-test new feature +
-load_n_train +
-*/
 import {Drawer, Trainer} from "./drawer";
 
 const msg_y = document.getElementById('msg-y');
@@ -61,7 +53,7 @@ export function ShowDataset() {
                     let content = e.target.result;
                     if (Trainer.test_file_integrity(content)) {
                         loaded = JSON.parse(content);
-                        step_0();
+                        stats();
                     }
                 };
 
@@ -80,6 +72,29 @@ export function ShowDataset() {
         //btn1.parentNode.insertBefore(hiddden_input,btn1.nextSibling);
     };
 
+    let stats = () => {
+        const div_stats = document.createElement('div');
+        msg_list.parentNode.appendChild(div_stats);
+
+        let stat = {
+            num_len: {},
+            total_len: 0,
+        };
+        for (let key in loaded) {
+            stat.num_len[key] = loaded[key].length;
+            stat.total_len += loaded[key].length;
+        }
+
+        div_stats.innerHTML = "<b>Campioni per ciascun numero</b><br/>";
+        for (let key in stat.num_len) {
+            div_stats.innerHTML += key+": "+stat.num_len[key]+"<br/>";
+        }
+
+        div_stats.innerHTML += "<b>Numero totale di campioni: </b>"+stat.total_len+"<br/>";
+
+        step_0();
+    };
+
     let step_0 = () => {
         let KEYS = Object.keys(loaded);
         let max_len = KEYS.length;
@@ -92,7 +107,7 @@ export function ShowDataset() {
             let num = loaded[KEYS[num_key]];
             drawer.trainer.import_into_X(num[i]);
             drawer.trainer.update();
-
+            msg_list.innerHTML = "Now Showing: <h1>"+KEYS[num_key]+"</h1>";
             if (i>=num.length-1) {
                 num_key++;
                 i=0;
@@ -214,6 +229,8 @@ export function MergeDataset() {
                     let content = e.target.result;
                     if (Trainer.test_file_integrity(content)) {
                         file1 = JSON.parse(content);
+                    } else {
+                        console.error("file1 not correct");
                     }
                 };
                 reader.readAsText(f);
@@ -267,6 +284,9 @@ export function MergeDataset() {
             drawer.trainer.dataset.import_dataset(file2);
             console.log("merged");
             drawer.trainer.dataset.download();
+        } else {
+            console.log(file1);
+            console.log(file2);
         }
     };
 }
@@ -348,6 +368,7 @@ export function ApproveDataset() {
                 return;
             }
             let imported = drawer.trainer.dataset._import(d[k][i]);
+            msg_list.innerHTML = "This should be a: <h1>"+k+"</h1>";
             drawer.trainer.import_into_X(imported);
             drawer.trainer.update();
             btn1.onclick = () => {
