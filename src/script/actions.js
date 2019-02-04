@@ -81,13 +81,26 @@ export function ShowDataset() {
     };
 
     let step_0 = () => {
-        let N = Object.keys(loaded);
+        let KEYS = Object.keys(loaded);
+        let max_len = KEYS.length;
+        console.log(loaded);
+        let i = 0;
+        let num_key = 0;
+        let aa = () => {
+            if (num_key >= max_len)
+                return;
+            let num = loaded[KEYS[num_key]];
+            drawer.trainer.import_into_X(num[i]);
+            drawer.trainer.update();
 
-        let step_0_1 = () => {
-            
+            if (i>=num.length-1) {
+                num_key++;
+                i=0;
+            }
+            i++;
+            setTimeout(aa, 50);
         };
-
-
+        aa();
     };
 }
 
