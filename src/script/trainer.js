@@ -39,7 +39,7 @@ export default class Trainer extends EventEmitter {
             let parsed = JSON.parse(content);
             for (let key in parsed) {
                 for (let j = 0; j < parsed[key]; j++) {
-                    if (parsed[key][j].length !== INITIAL_SIZE*INITIAL_SIZE) {
+                    if (parsed[key][j].length !== INITIAL_SIZE * INITIAL_SIZE) {
                         return false;
                     }
                 }
@@ -49,6 +49,7 @@ export default class Trainer extends EventEmitter {
         }
         return true;
     }
+
 
     avg_pooling() {
         if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
@@ -91,7 +92,6 @@ export default class Trainer extends EventEmitter {
             return Math.max.apply(null, array)
         };
         let convolve = (CONV_SIZE, edge_size, x, y) => {
-            // TODO for now do a simple average, later do with the kernel
             let pos = y * edge_size + x;
             let K = [];
             for (let ky = 0, kn = 0; ky < CONV_SIZE; ky++) {
@@ -122,10 +122,7 @@ export default class Trainer extends EventEmitter {
     }
 
     augment() {
-        // calculate what types of movements its possible to do
-        // do all the combination to obtain more data
         let ns = Math.sqrt(this.X.length);
-
         let bound = {
             x: {
                 min: ns,
@@ -163,7 +160,6 @@ export default class Trainer extends EventEmitter {
         };
 
         let move = (delta_x = 0, delta_y = 0) => {
-            // return new array, DON'T MODIFY THE ORIGINAL ONE
             const X = this.X.slice();
             let loop_y = {
                 start: (delta_y > 0) ? (ns - 1) : 0,
@@ -222,6 +218,7 @@ export default class Trainer extends EventEmitter {
 
         let original_X = this.X.slice();
         let xl = -delta.x.left;
+        let xr = delta.x.right;
         let aa = () => {
             if (xl >= 0)
                 return;
@@ -231,18 +228,22 @@ export default class Trainer extends EventEmitter {
             this.import_into_X(new_X);
             this.update();
             xl++;
-            setTimeout(aa, 1000);
+            setTimeout(aa, 500);
         };
-        aa();
-
-        /*for(let xl=-delta.x.left;xl<0;xl++) {
-            console.log(xl);
-        }*/
-
-        /*move(-delta.x.left,-delta.y.up);
-        this.update();*/
-
-        // randomly change opacity
+        for (let y = -delta.y.up; y <= delta.y.down; y++) {
+            if (y === 0)
+                continue;
+            for (let x = -delta.x.left; x <= delta.x.right; x++) {
+                if (x === 0)
+                    continue;
+                this.import_into_X(original_X);
+                let new_X = move(x, y);
+                this.import_into_X(new_X);
+                this.dataset.add(9, new_X);
+                this.update();
+            }
+        }
+        this.dataset.download();
     }
 
     update() {
