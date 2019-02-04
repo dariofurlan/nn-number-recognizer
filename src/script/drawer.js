@@ -10,11 +10,11 @@ function LoadingOverlay() {
     let div1 = document.createElement('div');
     let div2 = document.createElement('div');
     let span = document.createElement('span');
-    span.className="sr-only";
+    span.className = "sr-only";
     span.innerText = "Loading...";
     div1.id = "overlay";
     div2.id = "text";
-    div1.className="d-flex";
+    div1.className = "d-flex";
     div2.className = "spinner-border spinner-border-xl";
     div2.style.width = "5rem";
     div2.style.height = "5rem";
@@ -94,7 +94,7 @@ class Drawer extends EventEmitter {
             this.draw_on_grid(e);
             this.mousedown = false;
         };
-        this.canvas.onmouseup = this.canvas.onmouseleave = this.canvas.onpointerup = this.canvas.onpointerleave =  () => {
+        this.canvas.onmouseup = this.canvas.onmouseleave = this.canvas.onpointerup = this.canvas.onpointerleave = () => {
             this.mousedown = false;
         };
         this.canvas.ontouchstart = this.canvas.ontouchmove = (e) => {

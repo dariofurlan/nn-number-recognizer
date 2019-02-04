@@ -39,7 +39,7 @@ export default class Trainer extends EventEmitter {
             let parsed = JSON.parse(content);
             for (let key in parsed) {
                 for (let j = 0; j < parsed[key]; j++) {
-                    if (parsed[key][j].length !== INITIAL_SIZE*INITIAL_SIZE) {
+                    if (parsed[key][j].length !== INITIAL_SIZE * INITIAL_SIZE) {
                         return false;
                     }
                 }
@@ -122,9 +122,7 @@ export default class Trainer extends EventEmitter {
     }
 
     augment() {
-
         let ns = Math.sqrt(this.X.length);
-
         let bound = {
             x: {
                 min: ns,
@@ -232,29 +230,20 @@ export default class Trainer extends EventEmitter {
             xl++;
             setTimeout(aa, 500);
         };
-        for (let y=-delta.y.up;y<=delta.y.down;y++) {
-            if (y===0)
+        for (let y = -delta.y.up; y <= delta.y.down; y++) {
+            if (y === 0)
                 continue;
-            for (let x=-delta.x.left;x<=delta.x.right;x++) {
-                if (x===0)
+            for (let x = -delta.x.left; x <= delta.x.right; x++) {
+                if (x === 0)
                     continue;
                 this.import_into_X(original_X);
                 let new_X = move(x, y);
                 this.import_into_X(new_X);
-                this.dataset.add(9,new_X);
+                this.dataset.add(9, new_X);
                 this.update();
             }
         }
         this.dataset.export_n_download();
-
-        /*for(let xl=-delta.x.left;xl<0;xl++) {
-            console.log(xl);
-        }*/
-
-        /*move(-delta.x.left,-delta.y.up);
-        this.update();*/
-
-        // randomly change opacity
     }
 
     update() {
