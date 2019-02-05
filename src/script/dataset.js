@@ -13,16 +13,12 @@ function download(text) {
 }
 
 export default function Dataset() {
-    // private var
     let augmented = false; // augment only once, twice is not needed and useless
-
-    //public var
     this.dataset = {};
 
     this._export = (arr) => {
         return arr.join("");
     };
-
     this._import = (array_str) => {
         return array_str.split("").map(Number);
     };
@@ -35,7 +31,6 @@ export default function Dataset() {
         }
         this.dataset[y].push(X.slice());
     };
-
     this.import_dataset = (dataset_obj) => {
         for (let key in dataset_obj) {
             if (dataset_obj.hasOwnProperty(key))
@@ -44,7 +39,6 @@ export default function Dataset() {
                 }
         }
     };
-
     this.export_dataset = () => {
         let exported_dataset = {};
         for (let key in this.dataset) {
@@ -55,11 +49,9 @@ export default function Dataset() {
         }
         return exported_dataset;
     };
-
     this.download = () => {
         download(JSON.stringify(this.export_dataset()));
     };
-
     this.clean_duplicates = () => {
         for (let key in this.dataset) {
             if (this.dataset.hasOwnProperty(key))
@@ -67,18 +59,17 @@ export default function Dataset() {
                     for (let j = i + 1; j < this.dataset[key].length; j++) {
                         if (array_equals(this.dataset[key][i], this.dataset[key][j])) {
                             console.log("dropped");
-                            this.dataset[key].splice(j, 1);
+                            this.dataset[key].splice(i, 1);
                         }
                     }
                 }
         }
     };
-
     let array_equals = (arr1, arr2) => {
         return arr1.every((value, index) => value === arr2[index]);
     };
 
-    /* -------------------------AUGMENTATION part------------------------- */
+    /* ----------------------AUGMENTATION---------------------- */
     let calculate_figure_bounds = (X, ns) => {
         let bound = {
             x: {
@@ -116,7 +107,6 @@ export default function Dataset() {
         };
         return {bounds: bound, delta: delta};
     };
-
     let move = (X, ns, delta_x = 0, delta_y = 0) => {
         const nX = X.slice();
         let loop_y = {
@@ -173,15 +163,13 @@ export default function Dataset() {
         }
         return nX;
     };
-
-    let all_possible_movements = (y,X) => {
+    let all_possible_movements = (y, X) => {
         const new_dataset = [];
         const ns = Math.sqrt(X.length);
         const {delta} = calculate_figure_bounds(X, ns);
-        console.log(delta);
         for (let dy = -delta.y.up; dy <= delta.y.down; dy++) {
             for (let dx = -delta.x.left; dx <= delta.x.right; dx++) {
-                if (dx===0 && dy===0)
+                if (dx === 0 && dy === 0)
                     continue;
                 let new_X = move(X, ns, dx, dy);
                 new_dataset.push(this._export(new_X));
@@ -189,7 +177,6 @@ export default function Dataset() {
         }
         return new_dataset;
     };
-
     this.augment = () => {
         if (augmented)
             throw new Error("Already Augmented");
@@ -198,12 +185,27 @@ export default function Dataset() {
             new_dataset[key] = [];
             for (let i = 0; i < this.dataset[key].length; i++) {
                 const X = this.dataset[key][i];
-                new_dataset[key] = all_possible_movements(key, X);
+                all_possible_movements(key, X).every(value => new_dataset[key].push(value));
             }
         }
         this.import_dataset(new_dataset);
         augmented = true;
-        this.clean_duplicates();
         this.download();
+        //this.clean_duplicates();
     };
 }
+
+/*
+const dt = new Dataset();
+
+/!*dt.add(0, [1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+dt.add(0, [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0]);*!/
+
+dt.add(0, [1,1,0,0]);
+dt.add(0, [1,0,1,0]);
+
+console.log(dt.export_dataset());
+
+dt.augment();
+
+console.log(dt.export_dataset());*/
