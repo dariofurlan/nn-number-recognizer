@@ -125,6 +125,7 @@ export function ShowDataset() {
 
 export function AugmentDataset() {
     let btn1 = document.createElement("button");
+    alert("browser may slow down, or even exit!");
     btn_group.appendChild(btn1);
 
     let loaded;

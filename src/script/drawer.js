@@ -73,6 +73,7 @@ class Drawer extends EventEmitter {
         this.trainer.on('update', () => {
             this.redraw();
         });
+        this.loading_overlay = new LoadingOverlay();
         this.canvas = document.getElementById('canvas');
         this.parent = document.getElementById('half-left');
         this.general_progress_bar = document.getElementById('prg1');
