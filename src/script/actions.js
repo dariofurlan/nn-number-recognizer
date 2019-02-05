@@ -73,6 +73,7 @@ export function ShowDataset() {
     };
 
     let stats = () => {
+        btn_group.removeChild(btn1);
         const div_stats = document.createElement('div');
         msg_list.parentNode.appendChild(div_stats);
 
@@ -87,10 +88,10 @@ export function ShowDataset() {
 
         div_stats.innerHTML = "<b>Campioni per ciascun numero</b><br/>";
         for (let key in stat.num_len) {
-            div_stats.innerHTML += key+": "+stat.num_len[key]+"<br/>";
+            div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
         }
 
-        div_stats.innerHTML += "<b>Numero totale di campioni: </b>"+stat.total_len+"<br/>";
+        div_stats.innerHTML += "<b>Numero totale di campioni: </b>" + stat.total_len + "<br/>";
 
         step_0();
     };
@@ -98,29 +99,77 @@ export function ShowDataset() {
     let step_0 = () => {
         let KEYS = Object.keys(loaded);
         let max_len = KEYS.length;
-        console.log(loaded);
         let i = 0;
         let num_key = 0;
         let aa = () => {
-            if (num_key >= max_len)
-                return;
             let num = loaded[KEYS[num_key]];
             drawer.trainer.import_into_X(num[i]);
+            drawer.trainer.dataset.add(KEYS[num_key], drawer.trainer.dataset._import(num[i]));
             drawer.trainer.update();
-            msg_list.innerHTML = "Now Showing: <h1>"+KEYS[num_key]+"</h1>";
-            if (i>=num.length-1) {
-                num_key++;
-                i=0;
-            }
+            msg_list.innerHTML = "Now Showing: <h1>" + KEYS[num_key] + "</h1>";
             i++;
+            if (i >= num.length) {
+                num_key++;
+                i = 0;
+            }
+            if (num_key >= max_len) {
+                drawer.trainer.dataset.augment();
+                drawer.trainer.dataset.download();
+                return;
+            }
             setTimeout(aa, 50);
         };
         aa();
     };
 }
 
+export function AugmentDataset() {
+    let btn1 = document.createElement("button");
+    btn_group.appendChild(btn1);
+
+    let loaded;
+
+    this.start = () => {
+        let input_file = document.createElement('input');
+        input_file.type = "file";
+        input_file.onchange = (evt) => {
+            let files = evt.target.files;
+            for (let i = 0; i < files.length; i++) {
+                let f = files[i];
+                let reader = new FileReader();
+                reader.onload = (e) => {
+                    let content = e.target.result;
+                    if (Trainer.test_file_integrity(content)) {
+                        loaded = JSON.parse(content);
+                        step_0();
+                    }
+                };
+
+                reader.readAsText(f);
+            }
+        };
+        input_file.style.display = "none";
+
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Load Dataset";
+        btn1.onclick = () => {
+            input_file.click();
+        };
+    };
+
+    let step_0 = () => {
+        btn_group.removeChild(btn1);
+        drawer.trainer.dataset.import_dataset(loaded);
+        setTimeout(drawer.trainer.dataset.augment,0);
+        drawer.on
+    };
+}
+
 export function NewDataset() {
     document.getElementById('canvas-header').hidden = false;
+    drawer.updateCanvasSize();
     let btn1 = document.createElement("button");
     btn_group.appendChild(btn1);
 
@@ -368,7 +417,7 @@ export function ApproveDataset() {
                 return;
             }
             let imported = drawer.trainer.dataset._import(d[k][i]);
-            msg_list.innerHTML = "This should be a: <h1>"+k+"</h1>";
+            msg_list.innerHTML = "This should be a: <h1>" + k + "</h1>";
             drawer.trainer.import_into_X(imported);
             drawer.trainer.update();
             btn1.onclick = () => {

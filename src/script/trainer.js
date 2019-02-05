@@ -38,13 +38,16 @@ export default class Trainer extends EventEmitter {
         try {
             let parsed = JSON.parse(content);
             for (let key in parsed) {
-                for (let j = 0; j < parsed[key]; j++) {
+                for (let j = 0; j < parsed[key].length; j++) {
                     if (parsed[key][j].length !== INITIAL_SIZE * INITIAL_SIZE) {
+                        console.log(key);
+                        console.log(parsed[key][j].length);
                         return false;
                     }
                 }
             }
         } catch (e) {
+            console.error(e);
             return false;
         }
         return true;
