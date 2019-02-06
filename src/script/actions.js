@@ -516,7 +516,16 @@ export function Loader_n_Trainer() {
     };
 
     let step_0 = () => {
-        let dt =drawer.trainer.dataset;
+        let dt = drawer.trainer.dataset;
+        /*Object.keys(dataset).map(function(num_key, j){
+            let nums = dataset[num_key];
+            nums.map(function(value, i) {
+                let X = nums[i];
+            });
+        });*/
+        let loop1 = () => {
+                 
+        };
         for (let key in dt.dataset) {
             for (let i=0;i<dt.dataset[key].length;i++) {
                 drawer.trainer.import_into_X(dt.dataset[key][i]);
@@ -533,6 +542,7 @@ export function Loader_n_Trainer() {
                 let best_pred = pred[0].number;
                 msg_list.innerHTML = "al <b>" + acc + "</b>% il numero disegnato è: <b>" + best_pred + "</b>";
                 msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
+                console.log("k:"+key+":"+error);
             }
         }
         step_1();
@@ -550,8 +560,6 @@ export function Loader_n_Trainer() {
     let step_1 = () => {
         //console.log("step_0");
         drawer.trainer.reset();
-        y = Trainer.get_test_y();
-        msg_y.innerText = y;
         drawer.enable();
     };
     // ended drawing: pooling

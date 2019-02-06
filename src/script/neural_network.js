@@ -6,7 +6,7 @@ export default class NeuralNetwork {
         this.hiddenLayerSize = hidden; // I don't know what is the best value
         this.outputLayerSize = output;
 
-        this.learning_rate = 10;
+        this.learning_rate = 5;
 
         this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
             return row.map(() => {

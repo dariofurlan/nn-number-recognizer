@@ -192,6 +192,15 @@ export default function Dataset() {
         augmented = true;
         this.download();
     };
+
+    /* ----------------------AUGMENTATION---------------------- */
+    this.train = () => {
+        // TODO  creare un array con il dataset a random
+        // TODO  per ogni X il rispettivo Y
+        // TODO  avviare l'allenamento in batch, stabilire quindi la dimensione di una batch, ogni tanto aggiornare la grafica con un callback
+        // TODO  magari all'inizio aggiornarla ad ogni step, deve essere quindi flessibile
+        // TODO  nella fase di allenamento bisogna fare il max_pooling di ogni valore
+    }
 }
 
 /*
