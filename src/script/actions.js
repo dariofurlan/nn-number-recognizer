@@ -497,7 +497,7 @@ export function Loader_n_Trainer() {
         load().then(dataset => {
             drawer.trainer.dataset.import_dataset(dataset);
             step_0();
-        });
+        }).catch(reason => console.error(reason));
     };
 
     let load = () => {
@@ -515,20 +515,53 @@ export function Loader_n_Trainer() {
         });
     };
 
-    /*
-    * load number by number
-    * augment number
-    * train each augmented number
-    *   |
-    *   +---> max_pooling
-    *   +---> training
-    */
-
     let step_0 = () => {
-        // augment
+        let dt =drawer.trainer.dataset;
+        for (let key in dt.dataset) {
+            for (let i=0;i<dt.dataset[key].length;i++) {
+                drawer.trainer.import_into_X(dt.dataset[key][i]);
+                drawer.trainer.update();
+                drawer.trainer.max_pooling();
+                let {pred, error} = drawer.trainer.train(key);
+                //error = Math.round(error * 1000000) / 10000;
+                msg_list.innerHTML = "";
+                for (let i = 0; i < pred.length; i++) {
+                    let acc = Math.round(pred[i].accuracy * 1000000) / 10000;
+                    msg_list.innerHTML += pred[i].number + ") " + acc + "<br/>";
+                }
+                let acc = Math.round(pred[0].accuracy * 10000) / 100;
+                let best_pred = pred[0].number;
+                msg_list.innerHTML = "al <b>" + acc + "</b>% il numero disegnato è: <b>" + best_pred + "</b>";
+                msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
+            }
+        }
+        step_1();
     };
 
+    drawer.on("drawing", () => drawer.reset_timer());
+    drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
+    drawer.on("timer end", () => {
+        step_2();
+        drawer.update_progress_timer(0);
+    });
+
+    let y;
+
     let step_1 = () => {
-        // train
+        //console.log("step_0");
+        drawer.trainer.reset();
+        y = Trainer.get_test_y();
+        msg_y.innerText = y;
+        drawer.enable();
+    };
+    // ended drawing: pooling
+    let step_2 = () => {
+        //console.log("step_1");
+        drawer.disable();
+        drawer.trainer.max_pooling();
+        let pred = drawer.trainer.test();
+        console.log(pred);
+        step_1();
+        //setTimeout(step_2, 250);
     };
 }

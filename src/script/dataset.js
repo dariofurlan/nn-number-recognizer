@@ -191,7 +191,6 @@ export default function Dataset() {
         this.import_dataset(new_dataset);
         augmented = true;
         this.download();
-        //this.clean_duplicates();
     };
 }
 
