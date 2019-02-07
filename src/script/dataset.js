@@ -245,6 +245,7 @@ function DatasetRandomCursor(ds) {
     KEYS.forEach(value => {
         already_fetched[value] = [];
         already_fetched[value].length = dataset[value].length;
+        already_fetched[value].fill(0);
     });
 
     let random_pair = () => {
@@ -252,25 +253,21 @@ function DatasetRandomCursor(ds) {
         do {
             _k = Math.floor(Math.random() * KEYS.length);
             _i = Math.floor(Math.random() * dataset[KEYS[_k]].length);
-        } while (already_fetched[KEYS[_k]][_i]);
-        already_fetched[KEYS[_k]][_i] = true;
-        return {k: _k,i: _i};
+        } while (already_fetched[KEYS[_k]][_i]===1);
+        let res = dataset[KEYS[_k]][_i];
+        already_fetched[KEYS[_k]][_i] = 1;
+        if (already_fetched[KEYS[_k]].every(value => value===1)) {
+            delete already_fetched[KEYS[_k]];
+            delete KEYS[_k];
+            KEYS.length--;
+        }
+        if (Object.keys(already_fetched).length === 0)
+            return null;
+        return res;
     };
 
     this.fetch = () => {
-        if (i >= dataset[KEYS[k]].length) {
-            k++;
-            i = 0;
-        }
-        if (k >= KEYS.length)
-            return;
-        let ret = random_pair();
-        console.log(already_fetched);
-        if (i < dataset[KEYS[k]].length) {
-            i++;
-        }
-        return ret;
-        // random k random i then put add it to already fetched if doesn't exist yet, if it exist recalculate
+        return random_pair();
     }
 }
 
@@ -285,8 +282,10 @@ dt.add(1, [0,1,0,0]);
 // console.log(dt.export_dataset());
 
 const cursor = dt.get_random_cursor();
+
+
 for (let row=cursor.fetch();row;row=cursor.fetch()) {
-    // console.log(row);
+    console.log(row);
 }
 
 // console.log(dt.export_dataset());
