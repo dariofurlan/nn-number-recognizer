@@ -30,7 +30,7 @@ for (let i = 0; i < actions.length; i++) {
         btn_back.className = "btn btn-warning";
         btn_back.onclick = () => window.location.reload();
         btn_group.appendChild(btn_back);
-        btns.every(value => btn_group.removeChild(value));
+        btns.forEach(value => btn_group.removeChild(value));
         loaded = new Actions[key]().start();
     };
     btn_group.appendChild(btns[i]);

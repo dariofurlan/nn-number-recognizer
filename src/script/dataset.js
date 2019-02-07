@@ -69,6 +69,12 @@ export default function Dataset() {
                 }
         }
     };
+    this.get_ordered_cursor = () => {
+        return new DatasetCursor(this.dataset);
+    };
+    this.get_random_cursor = () => {
+        return new DatasetRandomCursor(this.dataset);
+    };
     let array_equals = (arr1, arr2) => {
         return arr1.every((value, index) => value === arr2[index]);
     };
@@ -189,7 +195,7 @@ export default function Dataset() {
             new_dataset[key] = [];
             for (let i = 0; i < this.dataset[key].length; i++) {
                 const X = this.dataset[key][i];
-                all_possible_movements(key, X).every(value => new_dataset[key].push(value));
+                all_possible_movements(key, X).forEach(value => new_dataset[key].push(value));
             }
         }
         this.import_dataset(new_dataset);
@@ -207,17 +213,58 @@ export default function Dataset() {
     }
 }
 
-/*
+function DatasetCursor(ds) {
+    const dataset = ds;
+    let KEYS = Object.keys(dataset);
+    let k = 0;
+    let i = 0;
+
+    this.fetch = () => {
+        if (i >= dataset[KEYS[k]].length) {
+            k++;
+            i = 0;
+        }
+        if (k >= KEYS.length)
+            return;
+        let ret = dataset[KEYS[k]][i];
+        if (i < dataset[KEYS[k]].length) {
+            i++;
+        }
+        return ret;
+    };
+}
+
+function DatasetRandomCursor(ds) {
+    const dataset = ds;
+
+    let KEYS = Object.keys(dataset);
+    let k = 0;
+    let i = 0;
+
+    let already_fetched = {};
+    KEYS.forEach(value => {
+        already_fetched[value] = [];
+        already_fetched[value].length = dataset[value].length;
+    });
+
+    this.fetch = () => {
+        // random k random i then put add it to already fetched if doesn't exist yet, if it exist recalculate
+    }
+}
+
 const dt = new Dataset();
 
-/!*dt.add(0, [1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
-dt.add(0, [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0]);*!/
-
-dt.add(0, [1,1,0,0]);
-dt.add(0, [1,0,1,0]);
+dt.add("0", [1,1,0,0]);
+dt.add("0", [1,0,1,0]);
+dt.add( 1, [0,0,0,0]);
+dt.add(1, [1,0,0,0]);
+dt.add(1, [0,1,0,0]);
 
 console.log(dt.export_dataset());
 
-dt.augment();
+const cursor = dt.get_random_cursor();
+for (let row=cursor.fetch();row;row=cursor.fetch()) {
+    console.log(row);
+}
 
-console.log(dt.export_dataset());*/
+// console.log(dt.export_dataset());
