@@ -5,32 +5,6 @@ const msg_list = document.getElementById('msg-list');
 const btn_group = document.getElementById('btn-group');
 const drawer = new Drawer();
 
-
-/*------------------------FUNCTIONS--------------------------*/
-
-function load_dataset() {
-    return new Promise(resolve => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        callback(JSON.parse(content));
-                    }
-                };
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-    });
-} // TODO see if it's worth it
-
-
 /*-------------------------ACTIONS---------------------------*/
 drawer.disable();
 document.getElementById('canvas-header').hidden = true;
@@ -42,34 +16,13 @@ export function ShowDataset() {
     let loaded;
 
     this.start = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        loaded = JSON.parse(content);
-                        stats();
-                    }
-                };
-
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
         btn1.hidden = false;
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
-        btn1.onclick = () => {
-            input_file.click();
-        };
-        //btn1.parentNode.insertBefore(hiddden_input,btn1.nextSibling);
+        Trainer.load_file_check(btn1).then(parsed_content => {
+             loaded = parsed_content;
+        });
     };
 
     let stats = () => {
@@ -163,7 +116,7 @@ export function AugmentDataset() {
     let step_0 = () => {
         btn_group.removeChild(btn1);
         drawer.trainer.dataset.import_dataset(loaded);
-        setTimeout(drawer.trainer.dataset.augment,0);
+        setTimeout(drawer.trainer.dataset.augment, 0);
         drawer.on
     };
 }
@@ -340,6 +293,10 @@ export function MergeDataset() {
             console.log(file2);
         }
     };
+}
+
+export function CenterDataset() {
+
 }
 
 export function ApproveDataset() {
@@ -525,10 +482,10 @@ export function Loader_n_Trainer() {
             });
         });*/
         let loop1 = () => {
-                 
+
         };
         for (let key in dt.dataset) {
-            for (let i=0;i<dt.dataset[key].length;i++) {
+            for (let i = 0; i < dt.dataset[key].length; i++) {
                 drawer.trainer.import_into_X(dt.dataset[key][i]);
                 drawer.trainer.update();
                 drawer.trainer.max_pooling();
@@ -543,7 +500,7 @@ export function Loader_n_Trainer() {
                 let best_pred = pred[0].number;
                 msg_list.innerHTML = "al <b>" + acc + "</b>% il numero disegnato è: <b>" + best_pred + "</b>";
                 msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
-                console.log("k:"+key+":"+error);
+                console.log("k:" + key + ":" + error);
             }
         }
         step_1();

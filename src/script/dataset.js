@@ -12,6 +12,10 @@ function download(text) {
     document.body.removeChild(element);
 }
 
+//TODO  functions that loop through the dataset in order and randomly with a thing similar to the "fetch_assoc"
+//TODO  so it will be while(let res = dataset.fetch...) {[...]}
+//TODO  in the random loop it must take care of all the previously choosen randomly numbers
+
 export default function Dataset() {
     let augmented = false; // augment only once, twice is not needed and useless
     this.dataset = {};

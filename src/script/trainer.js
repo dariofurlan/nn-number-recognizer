@@ -53,6 +53,40 @@ export default class Trainer extends EventEmitter {
         return true;
     }
 
+    static load_file(btn) {
+        return new Promise((resolve, reject) => {
+            let input_file = document.createElement('input');
+            input_file.type = "file";
+            input_file.onchange = (evt) => {
+                let files = evt.target.files;
+                for (let i = 0; i < files.length; i++) {
+                    let f = files[i];
+                    let reader = new FileReader();
+                    reader.onload = (e) => {
+                        let content = e.target.result;
+                        resolve(content);
+                    };
+                    reader.readAsText(f);
+                }
+            };
+            input_file.style.display = "none";
+            btn.onclick = () => {
+                input_file.click();
+            };
+        });
+    }
+
+    static load_file_check(btn) {
+        return new Promise((resolve, reject) => {
+            Trainer.load_file(btn).then(content => {
+                if (Trainer.test_file_integrity(content)) {
+                    resolve(JSON.parse(content));
+                } else {
+                    reject("Error: File not integer")
+                }
+            });
+        });
+    }
 
     avg_pooling() {
         if (this.X.length / (CONV_SIZE * CONV_SIZE) < AFTER_POOL_SIZE * AFTER_POOL_SIZE)
