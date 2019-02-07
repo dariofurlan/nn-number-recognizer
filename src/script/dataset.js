@@ -247,7 +247,29 @@ function DatasetRandomCursor(ds) {
         already_fetched[value].length = dataset[value].length;
     });
 
+    let random_pair = () => {
+        let _k,_i;
+        do {
+            _k = Math.floor(Math.random() * KEYS.length);
+            _i = Math.floor(Math.random() * dataset[KEYS[_k]].length);
+        } while (already_fetched[KEYS[_k]][_i]);
+        already_fetched[KEYS[_k]][_i] = true;
+        return {k: _k,i: _i};
+    };
+
     this.fetch = () => {
+        if (i >= dataset[KEYS[k]].length) {
+            k++;
+            i = 0;
+        }
+        if (k >= KEYS.length)
+            return;
+        let ret = random_pair();
+        console.log(already_fetched);
+        if (i < dataset[KEYS[k]].length) {
+            i++;
+        }
+        return ret;
         // random k random i then put add it to already fetched if doesn't exist yet, if it exist recalculate
     }
 }
@@ -260,11 +282,11 @@ dt.add( 1, [0,0,0,0]);
 dt.add(1, [1,0,0,0]);
 dt.add(1, [0,1,0,0]);
 
-console.log(dt.export_dataset());
+// console.log(dt.export_dataset());
 
 const cursor = dt.get_random_cursor();
 for (let row=cursor.fetch();row;row=cursor.fetch()) {
-    console.log(row);
+    // console.log(row);
 }
 
 // console.log(dt.export_dataset());
