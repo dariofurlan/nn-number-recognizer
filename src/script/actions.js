@@ -333,6 +333,7 @@ export function MergeDataset() {
             drawer.trainer.dataset.import_dataset(file1);
             drawer.trainer.dataset.import_dataset(file2);
             console.log("merged");
+            drawer.trainer.dataset.clean_duplicates();
             drawer.trainer.dataset.download();
         } else {
             console.log(file1);
