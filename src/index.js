@@ -8,7 +8,6 @@ import * as Actions from './script/actions';
 // TODO  avviare il countdown al rilascio del mouse o alla fine del tocco
 // TODO  draw_on_grid with coordinates instead of event
 // TODO  finally create all error messages for the whole project
-// TODO  make the dataset an Array before learning phase so that is more useful to pick random in order to train the NN
 // TODO  let the drawer control the overlay, the progress bar, the canvas, insomma tutto il suo riquadro
 // TODO  improve the navigation bar
 
