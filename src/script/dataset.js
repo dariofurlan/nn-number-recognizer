@@ -69,11 +69,42 @@ export default function Dataset() {
                 }
         }
     };
-    this.get_ordered_cursor = () => {
-        return new DatasetCursor(this.dataset);
+    this.center_dataset = () => {
+        // TODO is this needed ?
     };
-    this.get_random_cursor = () => {
-        return new DatasetRandomCursor(this.dataset);
+    this.flatten_dataset = () => {
+        const flattened_dataset = {X: [], Y: []};
+        let y_size = Object.keys(this.dataset).length;
+        for (let key in this.dataset) {
+            flattened_dataset.X.push(...this.dataset[key]);
+            let Ys = new Array(this.dataset[key].length).fill(key);
+            Ys.forEach((value, index, array) => {
+                let Y = new Array(y_size).fill(0);
+                Y[key] = 1;
+                array[index] = Y;
+            });
+            flattened_dataset.Y.push(...Ys);
+        }
+        return flattened_dataset;
+    };
+    this.shuffle_dataset = () => {
+        const shuffled_dataset = this.flatten_dataset();
+        for (let i = shuffled_dataset.X.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled_dataset.X[i], shuffled_dataset.X[j]] = [shuffled_dataset.X[j], shuffled_dataset.X[i]];
+            [shuffled_dataset.Y[i], shuffled_dataset.Y[j]] = [shuffled_dataset.Y[j], shuffled_dataset.Y[i]];
+        }
+        return shuffled_dataset
+    };
+    this.get_ordered_cursor = (num_epochs) => {
+        if (!num_epochs || num_epochs<1)
+            num_epochs = Object.keys(this.dataset).length;
+        return new DatasetOrderedCursor(this.flatten_dataset(), num_epochs);
+    };
+    this.get_random_cursor = (num_epochs) => {
+        if (!num_epochs || num_epochs<=0)
+            num_epochs = Object.keys(this.dataset).length;
+        return new DatasetOrderedCursor(this.shuffle_dataset(), num_epochs);
     };
     let array_equals = (arr1, arr2) => {
         return arr1.every((value, index) => value === arr2[index]);
@@ -213,79 +244,47 @@ export default function Dataset() {
     }
 }
 
-function DatasetCursor(ds) {
+function DatasetOrderedCursor(ds, num_epochs) {
     const dataset = ds;
-    let KEYS = Object.keys(dataset);
-    let k = 0;
     let i = 0;
-
-    this.fetch = () => {
-        if (i >= dataset[KEYS[k]].length) {
-            k++;
-            i = 0;
-        }
-        if (k >= KEYS.length)
-            return;
-        let ret = dataset[KEYS[k]][i];
-        if (i < dataset[KEYS[k]].length) {
-            i++;
-        }
-        return ret;
-    };
-}
-
-function DatasetRandomCursor(ds) {
-    const dataset = ds;
-
-    let KEYS = Object.keys(dataset);
-    let k = 0;
-    let i = 0;
-
-    let already_fetched = {};
-    KEYS.forEach(value => {
-        already_fetched[value] = [];
-        already_fetched[value].length = dataset[value].length;
-        already_fetched[value].fill(0);
-    });
-
-    let random_pair = () => {
-        let _k,_i;
-        do {
-            _k = Math.floor(Math.random() * KEYS.length);
-            _i = Math.floor(Math.random() * dataset[KEYS[_k]].length);
-        } while (already_fetched[KEYS[_k]][_i]===1);
-        let res = dataset[KEYS[_k]][_i];
-        already_fetched[KEYS[_k]][_i] = 1;
-        if (already_fetched[KEYS[_k]].every(value => value===1)) {
-            delete already_fetched[KEYS[_k]];
-            delete KEYS[_k];
-            KEYS.length--;
-        }
-        if (Object.keys(already_fetched).length === 0)
-            return null;
-        return res;
-    };
-
-    this.fetch = () => {
-        return random_pair();
+    let batch_size = Math.floor(dataset.X.length / num_epochs);
+    console.log(batch_size);
+    if (dataset.X.length % num_epochs !== 0) {
+        console.warn("Batch size setted to 1 because dataset's length is not multiple of number of epochs");
     }
+
+    this.fetch = () => {
+        if (i >= dataset.X.length)
+            return;
+
+        let X = dataset.X.slice(i, i + batch_size);
+        let Y = dataset.Y.slice(i, i + batch_size);
+        i += batch_size;
+        return {X: X, Y: Y};
+    };
+    this.get_batch_size = () => {
+        return batch_size;
+    };
 }
 
 const dt = new Dataset();
 
-dt.add("0", [1,1,0,0]);
-dt.add("0", [1,0,1,0]);
-dt.add( 1, [0,0,0,0]);
-dt.add(1, [1,0,0,0]);
-dt.add(1, [0,1,0,0]);
+dt.add(0, [0, 0, 0, 0]);
+dt.add(1, [0, 0, 0, 1]);
+dt.add(2, [0, 0, 1, 0]);
+dt.add(3, [0, 0, 1, 1]);
+dt.add(4, [0, 1, 0, 0]);
+dt.add(5, [0, 1, 0, 1]);
+
+// console.log(JSON.stringify(dt.shuffle_dataset()));
 
 // console.log(dt.export_dataset());
 
-const cursor = dt.get_random_cursor();
+const cursor = dt.get_ordered_cursor(4);
 
-
-for (let row=cursor.fetch();row;row=cursor.fetch()) {
-    console.log(row);
+for (let row = cursor.fetch(); row; row = cursor.fetch()) {
+    console.log(JSON.stringify(row.X) + "  y:" + JSON.stringify(row.Y));
 }
+
 
 // console.log(dt.export_dataset());
