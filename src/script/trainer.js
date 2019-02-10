@@ -5,7 +5,7 @@ import Dataset from './dataset';
 const INITIAL_SIZE = 32;
 const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
 const NUM_NUM = 10;
-const HIDDEN_LAYER_SIZE = 15;
+const HIDDEN_LAYER_SIZE = 2;
 const CONV_SIZE = 2;
 
 export default class Trainer extends EventEmitter {
@@ -85,6 +85,21 @@ export default class Trainer extends EventEmitter {
                     reject("Error: File not integer")
                 }
             });
+        });
+    }
+
+    static remote_load () {
+        return new Promise((resolve, reject) => {
+            let oReq = new XMLHttpRequest();
+            oReq.onload = () => {
+                let parsed = JSON.parse(oReq.responseText);
+                resolve(parsed);
+            };
+            oReq.onerror = () => {
+                reject("Errore");
+            };
+            oReq.open("GET", "http://iofurlan.github.io/nn-number-recognizer/dataset/dataset.json");
+            oReq.send();
         });
     }
 
@@ -292,12 +307,14 @@ export default class Trainer extends EventEmitter {
     }
 
     import_into_X(array) {
-        if (array.length !== this.size * this.size)
+        if (array.length !== this.size * this.size) {
             throw new Error("Array size doesn't match");
+        }
         this.reset();
         for (let i = 0; i < array.length; i++) {
             this.X[i] = array[i];
         }
+        this.update();
     }
 
     test() {

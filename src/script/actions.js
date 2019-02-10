@@ -1,4 +1,5 @@
 import {Drawer, Trainer} from "./drawer";
+import Dataset from "./dataset";
 
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
@@ -14,6 +15,7 @@ export function ShowDataset() {
     btn_group.appendChild(btn1);
 
     let loaded;
+    let loaded_ds = new Dataset();
 
     this.start = () => {
         btn1.hidden = false;
@@ -22,14 +24,16 @@ export function ShowDataset() {
         btn1.innerText = "Load Dataset";
         Trainer.load_file_check(btn1).then(parsed_content => {
              loaded = parsed_content;
+             console.log(loaded);
+             loaded_ds.import_dataset(loaded);
+             btn1.outerHTML = "";
+             stats();
         });
     };
 
     let stats = () => {
-        btn_group.removeChild(btn1);
         const div_stats = document.createElement('div');
         msg_list.parentNode.appendChild(div_stats);
-
         let stat = {
             num_len: {},
             total_len: 0,
@@ -38,41 +42,44 @@ export function ShowDataset() {
             stat.num_len[key] = loaded[key].length;
             stat.total_len += loaded[key].length;
         }
-
         div_stats.innerHTML = "<b>Campioni per ciascun numero</b><br/>";
         for (let key in stat.num_len) {
             div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
         }
-
         div_stats.innerHTML += "<b>Numero totale di campioni: </b>" + stat.total_len + "<br/>";
-
         step_0();
     };
 
     let step_0 = () => {
-        let KEYS = Object.keys(loaded);
-        let max_len = KEYS.length;
-        let i = 0;
-        let num_key = 0;
-        let aa = () => {
-            let num = loaded[KEYS[num_key]];
-            drawer.trainer.import_into_X(num[i]);
-            drawer.trainer.dataset.add(KEYS[num_key], drawer.trainer.dataset._import(num[i]));
-            drawer.trainer.update();
-            msg_list.innerHTML = "Now Showing: <h1>" + KEYS[num_key] + "</h1>";
-            i++;
-            if (i >= num.length) {
-                num_key++;
-                i = 0;
-            }
-            if (num_key >= max_len) {
-                drawer.trainer.dataset.augment();
-                drawer.trainer.dataset.download();
+        let ab = () => {
+            let epoch = epoch_cursor.fetch();
+            if (!epoch)
                 return;
+            console.clear(); // todo check if is needed
+            console.info("epoch: "+epoch_cursor.get_current_epoch()+ " length: "+epoch.length);
+            if (epoch.length>1) {
+                let i=0;
+                let ac = () => {
+                    if (i<epoch.length) {
+                        drawer.trainer.import_into_X(epoch.X[i]);
+                        drawer.trainer.max_pooling();
+                        i++
+                    } else {
+                        setTimeout(ab, 1000);
+                        return;
+                    }
+                    setTimeout(ac, 50);
+                };
+                ac();
+            } else {
+                drawer.trainer.import_into_X(epoch.X[0]);
+                drawer.trainer.max_pooling();
+                setTimeout(ab, 100);
             }
-            setTimeout(aa, 50);
+
         };
-        aa();
+        let epoch_cursor = loaded_ds.get_ordered_cursor(10);
+        ab();
     };
 }
 
@@ -84,40 +91,21 @@ export function AugmentDataset() {
     let loaded;
 
     this.start = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        loaded = JSON.parse(content);
-                        step_0();
-                    }
-                };
-
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
         btn1.hidden = false;
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
-        btn1.onclick = () => {
-            input_file.click();
-        };
+        Trainer.load_file_check(btn1).then(parsed_content => {
+            loaded = parsed_content;
+            btn1.outerHTML = "";
+            step_0();
+        });
     };
 
     let step_0 = () => {
         btn_group.removeChild(btn1);
         drawer.trainer.dataset.import_dataset(loaded);
         setTimeout(drawer.trainer.dataset.augment, 0);
-        drawer.on
     };
 }
 
@@ -144,34 +132,14 @@ export function NewDataset() {
     });
 
     this.start = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        drawer.trainer.dataset.import_dataset(JSON.parse(content));
-                    }
-                };
-
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
         btn1.hidden = false;
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
-        btn1.onclick = () => {
-            input_file.click();
+        Trainer.load_file_check(btn1).then(parsed_content => {
+            drawer.trainer.dataset.import_dataset(parsed_content);
             step_0();
-        };
-        //btn1.parentNode.insertBefore(hiddden_input,btn1.nextSibling);
+        });
     };
 
     let step_0 = () => {
@@ -214,75 +182,37 @@ export function MergeDataset() {
     let btn1 = document.createElement('button');
     btn_group.appendChild(btn1);
 
-    let file1 = "";
-    let file2 = "";
+    let file1 = null;
+    let file2 = null;
     this.start = () => {
         load_file1();
     };
 
     let load_file1 = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        file1 = JSON.parse(content);
-                    } else {
-                        console.error("file1 not correct");
-                    }
-                };
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
         btn1.hidden = false;
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset 1";
-        btn1.onclick = () => {
-            input_file.click();
+        Trainer.load_file_check(btn1).then((parsed_content) => {
+            file1 = parsed_content;
             load_file2();
-        };
+        });
     };
 
     let load_file2 = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        file2 = JSON.parse(content);
-                        merge();
-                    }
-                };
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
         btn1.hidden = false;
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset 2";
-        btn1.onclick = () => {
-            input_file.click();
-        };
+        Trainer.load_file_check(btn1).then((parsed_content) => {
+            file2 = parsed_content;
+            merge();
+        });
     };
 
     let merge = () => {
         btn_group.removeChild(btn1);
-        if (file1 !== "" && file2 !== "") {
+        if (file1 && file2) {
             drawer.trainer.dataset.import_dataset(file1);
             drawer.trainer.dataset.import_dataset(file2);
             console.log("merged");
@@ -293,10 +223,6 @@ export function MergeDataset() {
             console.log(file2);
         }
     };
-}
-
-export function CenterDataset() {
-
 }
 
 export function ApproveDataset() {
@@ -317,32 +243,14 @@ export function ApproveDataset() {
     document.getElementById('canvas-header').hidden = true;
 
     this.start = () => {
-        let input_file = document.createElement('input');
-        input_file.type = "file";
-        input_file.onchange = (evt) => {
-            let files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                let f = files[i];
-                let reader = new FileReader();
-                reader.onload = (e) => {
-                    let content = e.target.result;
-                    if (Trainer.test_file_integrity(content)) {
-                        d = JSON.parse(content);
-                        import_or_not();
-                    }
-                };
-                reader.readAsText(f);
-            }
-        };
-        input_file.style.display = "none";
-
         btn1.hidden = false;
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
-        btn1.onclick = () => {
-            input_file.click();
-        };
+        Trainer.load_file_check(btn1).then((parsed_content) => {
+            d = parsed_content;
+            import_or_not();
+        });
     };
 
     let import_or_not = () => {
@@ -378,7 +286,7 @@ export function ApproveDataset() {
             let imported = drawer.trainer.dataset._import(d[k][i]);
             msg_list.innerHTML = "This should be a: <h1>" + k + "</h1>";
             drawer.trainer.import_into_X(imported);
-            drawer.trainer.update();
+            drawer.trainer.max_pooling();
             btn1.onclick = () => {
                 drawer.trainer.dataset.add(k, imported);
                 loop();
@@ -388,12 +296,11 @@ export function ApproveDataset() {
             };
             i++;
         }
-
         loop();
     };
 }
 
-export function TestFeature() {
+export function TestFeature() { // TODO just for dev purpose
     let y;
     document.getElementById('canvas-header').hidden = true;
     drawer.removeAllListeners("drawing");
@@ -450,30 +357,18 @@ export function TestFeature() {
 }
 
 export function Loader_n_Trainer() {
-    document.getElementById('canvas-header').hidden = false;
+    let dataset = new Dataset;
     this.start = () => {
-        load().then(dataset => {
-            drawer.trainer.dataset.import_dataset(dataset);
+        Trainer.remote_load().then(parsed => {
+            dataset.import_dataset(parsed);
             step_0();
         }).catch(reason => console.error(reason));
     };
-
-    let load = () => {
-        return new Promise((resolve, reject) => {
-            let oReq = new XMLHttpRequest();
-            oReq.onload = () => {
-                let dataset = JSON.parse(oReq.responseText);
-                resolve(dataset);
-            };
-            oReq.onerror = () => {
-                reject("Errore");
-            };
-            oReq.open("GET", "http://iofurlan.github.io/nn-number-recognizer/dataset/dataset.json");
-            oReq.send();
-        });
-    };
-
+    // train
     let step_0 = () => {
+        let epoch_cursor = dataset.get_random_cursor();
+
+
         let dt = drawer.trainer.dataset;
         /*Object.keys(dataset).map(function(num_key, j){
             let nums = dataset[num_key];
@@ -481,9 +376,6 @@ export function Loader_n_Trainer() {
                 let X = nums[i];
             });
         });*/
-        let loop1 = () => {
-
-        };
         for (let key in dt.dataset) {
             for (let i = 0; i < dt.dataset[key].length; i++) {
                 drawer.trainer.import_into_X(dt.dataset[key][i]);
@@ -506,14 +398,13 @@ export function Loader_n_Trainer() {
         step_1();
     };
 
+    // test
     drawer.on("drawing", () => drawer.reset_timer());
     drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
     drawer.on("timer end", () => {
         step_2();
         drawer.update_progress_timer(0);
     });
-
-    let y;
 
     let step_1 = () => {
         //console.log("step_0");

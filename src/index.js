@@ -10,6 +10,7 @@ import * as Actions from './script/actions';
 // TODO  finally create all error messages for the whole project
 // TODO  let the drawer control the overlay, the progress bar, the canvas, insomma tutto il suo riquadro
 // TODO  improve the navigation bar
+// TODO  gradually remove Trainer Class
 
 const btn_group = document.getElementById('btn-group');
 

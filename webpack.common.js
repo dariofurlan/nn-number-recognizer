@@ -12,7 +12,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: "src/index.html"
         }),
-        new CopyWebpackPlugin([{from: "src/dataset", to:"dataset"}])
+        new CopyWebpackPlugin([{from: "src/dataset", to:"dataset"},{from:"src/favicon.ico"}])
     ],
     output: {
         filename: 'bundle.js',
