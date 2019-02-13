@@ -23,7 +23,8 @@ export function ShowDataset() {
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
-        Trainer.load_file_check(btn1).then(parsed_content => {;
+        Trainer.load_file_check(btn1).then(parsed_content => {
+            ;
             loaded_ds.import_dataset(parsed_content);
             btn1.outerHTML = "";
             stats(parsed_content);
@@ -306,8 +307,8 @@ export function ApproveDataset() {
 export function TestFeature() { // TODO just for dev purpose
     let y;
 
-    let trace1 = {x:[1,2,3,4],y:[1,2,3,4],type:'scatter', name:'Error'};
-    let trace2 = {x:[1,2,3,4],y:[2,3,4,5],type:'scatter'};
+    let trace1 = {x: [1, 2, 3, 4], y: [1, 2, 3, 4], type: 'scatter', name: 'Error'};
+    let trace2 = {x: [1, 2, 3, 4], y: [2, 3, 4, 5], type: 'scatter'};
 
     let ds;
 
@@ -366,28 +367,134 @@ export function TestFeature() { // TODO just for dev purpose
 
 export function Loader_n_Trainer() {
     let dataset = new Dataset;
+    let nn = drawer.trainer.nn;
+    let e=0, x=1;
 
     this.start = () => {
         Trainer.remote_load().then(parsed => {
             dataset.import_dataset(parsed);
-            step_0();
+            prepare();
         }).catch(reason => console.error(reason));
     };
     // train
+    let prepare = () => {
+        let tracesW1 = [];
+        let tracesW2 = [];
+        /*nn.W1.map((row, i) => {
+            row.map((weight, ii) => {
+                let trace = {
+                    y:[weight],
+                    x:[0],
+                    name: 'W'+(i+1)+'-'+(ii+1),
+                    mode: 'line'
+                };
+                tracesW1.push(trace);
+            });
+        });*/
+        /*nn.W2.map((row, i) => {
+            row.map((weight, ii) => {
+                let trace = {
+                    y:[weight],
+                    x:[0],
+                    name: 'W'+(i+1)+'-'+(ii+1),
+                    type:'line'
+                };
+                tracesW2.push(trace);
+            });
+        });*/
+        let error_trace = {
+            y:[],
+            x:[],
+            name: "Error",
+            type: 'line'
+        };
+        // Plotly.newPlot('graph-W1', tracesW1, {title:"Weights Input->Hidden"}, {responsive:true});
+        // Plotly.newPlot('graph-W2', tracesW2, {title:"Weights Hidden->Output"}, {responsive:true});
+        Plotly.newPlot('graph-error', [error_trace], {title:"Total Error"}, {responsive:true});
+        step_0();
+    };
+
     let step_0 = () => {
+        let train_step = (X, Y) => {
+            drawer.trainer.import_into_X(X);
+            drawer.trainer.max_pooling();
+
+            let out = nn.train([drawer.trainer.X], [Y]);
+            let ext = {
+                y:[],
+                x:[]
+            };
+            let n  = [];
+            x++;
+            /*nn.W1.map((row) => {
+                row.map((weight) => {
+                    ext.y.push([weight]);
+                    ext.x.push([x]);
+                    n.push(n.length);
+                });
+            });*/
+            let ext2 = {
+                y:[],
+                x:[]
+            };
+            let n2  = [];
+            /*nn.W2.map((row) => {
+                row.map((weight) => {
+                    ext2.y.push([weight]);
+                    ext2.x.push([x]);
+                    n2.push(n2.length);
+                });
+            });*/
+            let ext_error = {
+                y:[[out.error]],
+                x:[[e]]
+            };
+            //Plotly.extendTraces('graph-W1', ext, n);
+            //Plotly.extendTraces('graph-W2', ext2, n2);
+            Plotly.extendTraces('graph-error', ext_error, [0]);
+            e++;
+            x++;
+
+            let prediction = out.prediction[0];
+            let error = out.error;
+
+
+            let pred = [];
+            for (let i = 0; i < prediction.length; i++) {
+                pred[i] = {
+                    number: i,
+                    accuracy: prediction[i]
+                };
+            }
+
+            // sort the other array
+            for (let i = 0; i < pred.length - 1; i++) {
+                for (let j = i + 1; j < pred.length; j++) {
+                    if (pred[i].accuracy < pred[j].accuracy) {
+                        let s = pred[i];
+                        pred[i] = pred[j];
+                        pred[j] = s;
+                    }
+                }
+            }
+
+            console.info("prediction: " + JSON.stringify(pred));
+            console.info("error: " + JSON.stringify(error));
+            console.log();
+        };
         let ab = () => {
             let epoch = epoch_cursor.fetch();
-            if (!epoch)
+            if (!epoch) {
+                step_1();
                 return;
-            console.clear(); // todo check if is needed
+            }
+            // console.clear(); // todo check if is needed
             console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
             if (epoch.length > 1) {
                 let i = 0;
                 let ac = () => {
                     if (i < epoch.length) {
-                        drawer.trainer.import_into_X(epoch.X[i]);
-                        drawer.trainer.max_pooling();
-
+                        train_step(epoch.X[i], epoch.Y[i]);
                         i++
                     } else {
                         setTimeout(ab, 1000);
@@ -397,12 +504,11 @@ export function Loader_n_Trainer() {
                 };
                 ac();
             } else {
-                drawer.trainer.import_into_X(epoch.X[0]);
-                drawer.trainer.max_pooling();
-                setTimeout(ab, 100);
+                train_step(epoch.X[0], epoch.Y[0]);
+                setTimeout(ab, 50);
             }
         };
-        let epoch_cursor = dataset.get_ordered_cursor(10);
+        let epoch_cursor = dataset.get_random_cursor();
         ab();
 
         /*let dt = drawer.trainer.dataset;
@@ -453,6 +559,7 @@ export function Loader_n_Trainer() {
         drawer.disable();
         drawer.trainer.max_pooling();
         let pred = drawer.trainer.test();
+        msg_list.innerText = JSON.stringify(pred);
         console.log(pred);
         step_1();
         //setTimeout(step_2, 250);

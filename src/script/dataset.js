@@ -429,4 +429,4 @@ function train() {
     calc_pred(nn.test([0, 0]), 0);
 }
 
-pretest();
+// pretest();

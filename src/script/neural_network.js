@@ -49,7 +49,8 @@ export default class NeuralNetwork {
         console.log(y_hat);
         console.log(math.subtract(y, y_hat));*/
 
-        let J = math.sum(math.multiply(0.5, math.square(math.subtract(y, y_hat))));
+        let errors = math.multiply(0.5, math.square(math.subtract(y, y_hat)));
+        let J = math.sum(errors);
         return J;
     }
 
@@ -69,15 +70,15 @@ export default class NeuralNetwork {
         return [dJdW1, dJdW2];
     }
 
-    train(X, y) {
-        let [dJdW1, dJdW2] = this.costFunctionPrime(X, y);
+    train(X, Y) {
+        let [dJdW1, dJdW2] = this.costFunctionPrime(X, Y);
         this.W2 = math.subtract(this.W2, math.multiply(this.learning_rate, dJdW2));
         this.W1 = math.subtract(this.W1, math.multiply(this.learning_rate, dJdW1));
         /*console.log(this.W1);
         console.log(this.W2);*/
-        let error = this.costFunction(X, y);
+        let error = this.costFunction(X, Y);
         return {
-            prediction: this.test(X, y),
+            prediction: this.test(X, Y),
             error: error,
         };
     }
