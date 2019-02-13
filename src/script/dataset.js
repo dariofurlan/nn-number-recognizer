@@ -275,7 +275,7 @@ function Cursor(ds, num_epochs) {
 
 function pretest() {
     dt = new Dataset();
-    nn = new NeuralNetwork(2,5,2);
+    nn = new NeuralNetwork(2,3,2);
     setTimeout(test, 200);
 }
 
@@ -284,24 +284,43 @@ let nn;
 
 function test() {
     let tracesW1 = [];
+    let tracesW2 = [];
     nn.W1.map((row, i) => {
         row.map((weight, ii) => {
             let trace = {
                 y:[weight],
                 x:[0],
                 name: 'W'+(i+1)+'-'+(ii+1),
-                type: 'scatter'
+                mode: 'line'
             };
            tracesW1.push(trace);
         });
     });
+    nn.W2.map((row, i) => {
+        row.map((weight, ii) => {
+            let trace = {
+                y:[weight],
+                x:[0],
+                name: 'W'+(i+1)+'-'+(ii+1),
+                type:'line'
+            };
+            tracesW2.push(trace);
+        });
+    });
+    let error_trace = {
+        y:[],
+        x:[],
+        name: "Error",
+        type: 'line'
+    };
+    Plotly.newPlot('graph-W1', tracesW1, {title:"Weights Input->Hidden"}, {responsive:true});
+    Plotly.newPlot('graph-W2', tracesW2, {title:"Weights Hidden->Output"}, {responsive:true});
+    Plotly.newPlot('graph-error', [error_trace], {title:"Total Error"}, {responsive:true});
 
-    console.log(tracesW1);
-    Plotly.newPlot('graph-div', tracesW1);
+    train();
+}
 
-
-    //throw new Error("Stop");
-
+function train() {
     for (let i = 0; i < 50; i++) {
         dt.add(1, [1, 1]);
         dt.add(0, [1, 0]);
@@ -312,7 +331,7 @@ function test() {
 
 
     let epoch;
-    let x = 0;
+    let x = 1, e = 0;
     while ((epoch = cursor.fetch())) {
         //console.log(row);
         console.info("epoch: " + cursor.get_current_epoch());
@@ -332,7 +351,28 @@ function test() {
                 n.push(n.length);
             });
         });
-        Plotly.extendTraces('graph-div', ext, n);
+        let ext2 = {
+            y:[],
+            x:[]
+        };
+        let n2  = [];
+        nn.W2.map((row, i) => {
+            row.map((weight, ii) => {
+                ext2.y.push([weight]);
+                ext2.x.push([x]);
+                n2.push(n2.length);
+            });
+        });
+        let ext_error = {
+            y:[[out.error]],
+            x:[[e]]
+        };
+        Plotly.extendTraces('graph-W1', ext, n);
+        Plotly.extendTraces('graph-W2', ext2, n2);
+        Plotly.extendTraces('graph-error', ext_error, [0]);
+        e++;
+        x++;
+
         let prediction = out.prediction[0];
         let error = out.error;
 
