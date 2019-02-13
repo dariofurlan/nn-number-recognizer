@@ -15,7 +15,7 @@ export default class Trainer extends EventEmitter {
         this.X = [];
         this.size = INITIAL_SIZE;
         this.reset();
-        this.nn = new NeuralNetwork(Math.pow(AFTER_POOL_SIZE, 2), HIDDEN_LAYER_SIZE, NUM_NUM);
+        //this.nn = new NeuralNetwork(Math.pow(AFTER_POOL_SIZE, 2), HIDDEN_LAYER_SIZE, NUM_NUM);
     }
 
     static get_train_Y() {
@@ -171,131 +171,6 @@ export default class Trainer extends EventEmitter {
         this.X.length = newOut.length;
         this.update();
         return true;
-    }
-
-    augment() {
-        let ns = Math.sqrt(this.X.length);
-        let bound = {
-            x: {
-                min: ns,
-                max: 0
-            }, y: {
-                min: ns,
-                max: 0
-            }
-        };
-        for (let y = ns - 1; y >= 0; y--) {
-            for (let x = ns - 1; x >= 0; x--) {
-                let pos = (y * ns) + x;
-                if (this.X[pos] !== 0) {
-                    if (x > bound.x.max)
-                        bound.x.max = x;
-                    if (x < bound.x.min)
-                        bound.x.min = x;
-                    if (y > bound.y.max)
-                        bound.y.max = y;
-                    if (y < bound.y.min)
-                        bound.y.min = y;
-                }
-            }
-        }
-
-        let max = ns - 1;
-        let delta = {
-            x: {
-                right: max - bound.x.max,
-                left: bound.x.min
-            }, y: {
-                down: max - bound.y.max,
-                up: bound.y.min
-            }
-        };
-
-        let move = (delta_x = 0, delta_y = 0) => {
-            const X = this.X.slice();
-            let loop_y = {
-                start: (delta_y > 0) ? (ns - 1) : 0,
-                condition: (delta_y > 0) ? (y) => {
-                    return y >= 0
-                } : (y) => {
-                    return y < ns
-                },
-                border_check: (delta_y > 0) ? (y) => {
-                    return y + delta_y > (ns - 1)
-                } : (y) => {
-                    return y + delta_y < 0
-                },
-                inc: (delta_y > 0) ? -1 : +1,
-            };
-            let loop_x = {
-                start: (delta_x > 0) ? (ns - 1) : 0,
-                condition: (delta_x > 0) ? (x) => {
-                    return x >= 0
-                } : (x) => {
-                    return x < ns
-                },
-                border_check: (delta_x > 0) ? (x) => {
-                    return x + delta_x > (ns - 1)
-                } : (x) => {
-                    return x + delta_x < 0
-                },
-                inc: (delta_x > 0) ? -1 : +1,
-            };
-            for (let y = loop_y.start; loop_y.condition(y); y += loop_y.inc) {
-                for (let x = loop_x.start; loop_x.condition(x); x += loop_x.inc) {
-                    let pos = (y * ns) + x;
-                    if (X[pos] === 0)
-                        continue;
-                    if (delta_x !== 0) {
-                        if (loop_x.border_check(x)) {
-                            X[pos] = 0;
-                        } else {
-                            X[pos + delta_x] = X[pos];
-                            X[pos] = 0;
-                            pos += delta_x;
-                        }
-                    }
-                    if (delta_y !== 0) {
-                        if (loop_y.border_check(y)) {
-                            X[pos] = 0;
-                        } else {
-                            X[pos + (delta_y * ns)] = X[pos];
-                            X[pos] = 0;
-                        }
-                    }
-                }
-            }
-            return X;
-        };
-
-        let original_X = this.X.slice();
-        let xl = -delta.x.left;
-        let xr = delta.x.right;
-        let aa = () => {
-            if (xl >= 0)
-                return;
-            console.log(xl);
-            this.import_into_X(original_X);
-            let new_X = move(xl, 0);
-            this.import_into_X(new_X);
-            this.update();
-            xl++;
-            setTimeout(aa, 500);
-        };
-        for (let y = -delta.y.up; y <= delta.y.down; y++) {
-            if (y === 0)
-                continue;
-            for (let x = -delta.x.left; x <= delta.x.right; x++) {
-                if (x === 0)
-                    continue;
-                this.import_into_X(original_X);
-                let new_X = move(x, y);
-                this.import_into_X(new_X);
-                this.dataset.add(9, new_X);
-                this.update();
-            }
-        }
-        this.dataset.download();
     }
 
     update() {

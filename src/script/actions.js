@@ -1,5 +1,7 @@
 import {Drawer, Trainer} from "./drawer";
 import Dataset from "./dataset";
+// import * as Plotly from "plotly.js";
+const Plotly = require('plotly.js');
 
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
@@ -14,7 +16,6 @@ export function ShowDataset() {
     let btn1 = document.createElement("button");
     btn_group.appendChild(btn1);
 
-    let loaded;
     let loaded_ds = new Dataset();
 
     this.start = () => {
@@ -22,18 +23,17 @@ export function ShowDataset() {
         btn1.disabled = false;
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
-        Trainer.load_file_check(btn1).then(parsed_content => {
-             loaded = parsed_content;
-             console.log(loaded);
-             loaded_ds.import_dataset(loaded);
-             btn1.outerHTML = "";
-             stats();
+        Trainer.load_file_check(btn1).then(parsed_content => {;
+            loaded_ds.import_dataset(parsed_content);
+            btn1.outerHTML = "";
+            stats(parsed_content);
         });
     };
 
-    let stats = () => {
+    let stats = (loaded) => {
         const div_stats = document.createElement('div');
         msg_list.parentNode.appendChild(div_stats);
+
         let stat = {
             num_len: {},
             total_len: 0,
@@ -55,12 +55,12 @@ export function ShowDataset() {
             let epoch = epoch_cursor.fetch();
             if (!epoch)
                 return;
-            console.clear(); // todo check if is needed
-            console.info("epoch: "+epoch_cursor.get_current_epoch()+ " length: "+epoch.length);
-            if (epoch.length>1) {
-                let i=0;
+
+            console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
+            if (epoch.length > 1) {
+                let i = 0;
                 let ac = () => {
-                    if (i<epoch.length) {
+                    if (i < epoch.length) {
                         drawer.trainer.import_into_X(epoch.X[i]);
                         drawer.trainer.max_pooling();
                         i++
@@ -88,7 +88,7 @@ export function AugmentDataset() {
     alert("browser may slow down, or even exit!");
     btn_group.appendChild(btn1);
 
-    let loaded;
+    let loaded_ds = new Dataset();
 
     this.start = () => {
         btn1.hidden = false;
@@ -96,15 +96,16 @@ export function AugmentDataset() {
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
         Trainer.load_file_check(btn1).then(parsed_content => {
-            loaded = parsed_content;
+            loaded_ds.import_dataset(parsed_content);
             btn1.outerHTML = "";
             step_0();
         });
     };
 
-    let step_0 = () => {
+    let step_0 = (parsed_content) => {
         btn_group.removeChild(btn1);
-        drawer.trainer.dataset.import_dataset(loaded);
+        new Dataset(parsed_content).augment();
+        loaded_ds.augment();
         setTimeout(drawer.trainer.dataset.augment, 0);
     };
 }
@@ -114,6 +115,8 @@ export function NewDataset() {
     drawer.updateCanvasSize();
     let btn1 = document.createElement("button");
     btn_group.appendChild(btn1);
+
+    let ds = new Dataset();
 
     let Y = Trainer.get_train_Y();
     let i = 0;
@@ -137,7 +140,7 @@ export function NewDataset() {
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
         Trainer.load_file_check(btn1).then(parsed_content => {
-            drawer.trainer.dataset.import_dataset(parsed_content);
+            ds.import_dataset(parsed_content);
             step_0();
         });
     };
@@ -148,7 +151,7 @@ export function NewDataset() {
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Download Dataset";
         btn1.onclick = () => {
-            drawer.trainer.dataset.download();
+            ds.download();
         };
         step_1()
     };
@@ -159,8 +162,8 @@ export function NewDataset() {
             i = 0;
         }
         if (c === max_c) {
-            drawer.trainer.dataset.download();
             drawer.trainer.reset();
+            ds.download();
             return;
         }
         drawer.trainer.reset();
@@ -171,7 +174,7 @@ export function NewDataset() {
     let step2 = () => {
         drawer.disable();
         drawer.update_progress_train(Math.floor((c * max_c + i + 1) * 100 / (Y.length * max_c))); // ToDo fix this percentage, please
-        drawer.trainer.add_X(Y[i]);
+        ds.add(Y[i], drawer.trainer.X);
         //trainer.augment();
         i++;
         step_1();
@@ -286,7 +289,6 @@ export function ApproveDataset() {
             let imported = drawer.trainer.dataset._import(d[k][i]);
             msg_list.innerHTML = "This should be a: <h1>" + k + "</h1>";
             drawer.trainer.import_into_X(imported);
-            drawer.trainer.max_pooling();
             btn1.onclick = () => {
                 drawer.trainer.dataset.add(k, imported);
                 loop();
@@ -296,12 +298,19 @@ export function ApproveDataset() {
             };
             i++;
         }
+
         loop();
     };
 }
 
 export function TestFeature() { // TODO just for dev purpose
     let y;
+
+    let trace1 = {x:[1,2,3,4],y:[1,2,3,4],type:'scatter', name:'Error'};
+    let trace2 = {x:[1,2,3,4],y:[2,3,4,5],type:'scatter'};
+
+    let ds;
+
     document.getElementById('canvas-header').hidden = true;
     drawer.removeAllListeners("drawing");
     drawer.removeAllListeners("timer progress");
@@ -330,13 +339,12 @@ export function TestFeature() { // TODO just for dev purpose
     let step_1 = () => {
         //console.log("step_1");
         drawer.disable();
-        drawer.trainer.add_X(y);
-        drawer.trainer.dataset.augment();
+        ds.add(y, drawer.trainer.X);
+        ds.augment();
         //setTimeout(step_2, 250);
     };
     // test and output
     let step_2 = () => {
-
         step_0();
     };
 
@@ -358,6 +366,7 @@ export function TestFeature() { // TODO just for dev purpose
 
 export function Loader_n_Trainer() {
     let dataset = new Dataset;
+
     this.start = () => {
         Trainer.remote_load().then(parsed => {
             dataset.import_dataset(parsed);
@@ -366,16 +375,43 @@ export function Loader_n_Trainer() {
     };
     // train
     let step_0 = () => {
-        let epoch_cursor = dataset.get_random_cursor();
+        let ab = () => {
+            let epoch = epoch_cursor.fetch();
+            if (!epoch)
+                return;
+            console.clear(); // todo check if is needed
+            console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
+            if (epoch.length > 1) {
+                let i = 0;
+                let ac = () => {
+                    if (i < epoch.length) {
+                        drawer.trainer.import_into_X(epoch.X[i]);
+                        drawer.trainer.max_pooling();
 
+                        i++
+                    } else {
+                        setTimeout(ab, 1000);
+                        return;
+                    }
+                    setTimeout(ac, 50);
+                };
+                ac();
+            } else {
+                drawer.trainer.import_into_X(epoch.X[0]);
+                drawer.trainer.max_pooling();
+                setTimeout(ab, 100);
+            }
+        };
+        let epoch_cursor = dataset.get_ordered_cursor(10);
+        ab();
 
-        let dt = drawer.trainer.dataset;
-        /*Object.keys(dataset).map(function(num_key, j){
+        /*let dt = drawer.trainer.dataset;
+        /!*Object.keys(dataset).map(function(num_key, j){
             let nums = dataset[num_key];
             nums.map(function(value, i) {
                 let X = nums[i];
             });
-        });*/
+        });*!/
         for (let key in dt.dataset) {
             for (let i = 0; i < dt.dataset[key].length; i++) {
                 drawer.trainer.import_into_X(dt.dataset[key][i]);
@@ -395,7 +431,7 @@ export function Loader_n_Trainer() {
                 console.log("k:" + key + ":" + error);
             }
         }
-        step_1();
+        step_1();*/
     };
 
     // test

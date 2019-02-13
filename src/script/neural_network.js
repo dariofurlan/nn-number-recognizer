@@ -7,16 +7,17 @@ export default class NeuralNetwork {
         this.outputLayerSize = output;
 
         this.learning_rate = 5;
-
         this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
             return row.map(() => {
-                return Math.random();
+                let sign = Math.random() < 0.5 ? -1 : 1;
+                return Math.random()*1.5*sign;
             });
         });
         //console.log(this.W1);
         this.W2 = math.randomInt([this.hiddenLayerSize, this.outputLayerSize]).map((row) => {
             return row.map(() => {
-                return Math.random();
+                let sign = Math.random() < 0.5 ? -1 : 1;
+                return Math.random()*1.5*sign;
             });
         });
         //console.log(this.W2);
@@ -43,6 +44,7 @@ export default class NeuralNetwork {
 
     costFunction(X, y) {
         let y_hat = this.forward(X);
+
         /*console.log(y);
         console.log(y_hat);
         console.log(math.subtract(y, y_hat));*/

@@ -1,3 +1,8 @@
+import NeuralNetwork from "./neural_network";
+const Plotly = require('plotly.js');
+
+// todo in the augmentation set a limit and then flatten the dataset
+
 function download(text) {
     let element = document.createElement('a');
     let date = new Date().toISOString().replace(/:/g, "-");
@@ -241,13 +246,13 @@ function Cursor(ds, num_epochs) {
     const dataset = ds;
     let i = 0;
 
-    if (!num_epochs || num_epochs < 1 || num_epochs>dataset.length)
+    if (!num_epochs || num_epochs < 1 || num_epochs > dataset.length)
         num_epochs = dataset.X.length;
 
     let batch_size = Math.floor(dataset.X.length / num_epochs);
-    console.info("Batch size setted to: "+batch_size);
+    console.info("Batch size setted to: " + batch_size);
     if (dataset.X.length % num_epochs !== 0) {
-        console.warn("Batch size rounded to "+batch_size+" because dataset's length is not multiple of number of epochs");
+        console.warn("Batch size rounded to " + batch_size + " because dataset's length is not multiple of number of epochs");
     }
 
     this.fetch = () => {
@@ -257,39 +262,131 @@ function Cursor(ds, num_epochs) {
         let X = dataset.X.slice(i, i + batch_size);
         let Y = dataset.Y.slice(i, i + batch_size);
         i += batch_size;
-        return {X: X, Y: Y, length:batch_size};
+        return {X: X, Y: Y, length: batch_size};
     };
     this.get_batch_size = () => {
         return batch_size;
     };
 
     this.get_current_epoch = () => {
-        return i/batch_size
+        return i / batch_size
     }
 }
+
+function pretest() {
+    dt = new Dataset();
+    nn = new NeuralNetwork(2,5,2);
+    setTimeout(test, 200);
+}
+
+let dt;
+let nn;
 
 function test() {
-    const dt = new Dataset();
+    let tracesW1 = [];
+    nn.W1.map((row, i) => {
+        row.map((weight, ii) => {
+            let trace = {
+                y:[weight],
+                x:[0],
+                name: 'W'+(i+1)+'-'+(ii+1),
+                type: 'scatter'
+            };
+           tracesW1.push(trace);
+        });
+    });
 
-    dt.add(0, [0, 0, 0, 0]);
-    dt.add(1, [0, 0, 0, 1]);
-    dt.add(2, [0, 0, 1, 0]);
-    dt.add(3, [0, 0, 1, 1]);
-    dt.add(4, [0, 1, 0, 0]);
-    dt.add(5, [0, 1, 0, 1]);
+    console.log(tracesW1);
+    Plotly.newPlot('graph-div', tracesW1);
 
-    // console.log(JSON.stringify(dt.shuffle_dataset()));
 
-    // console.log(dt.export_dataset());
+    //throw new Error("Stop");
 
-    const cursor = dt.get_ordered_cursor();
-    let row;
-    while ((row = cursor.fetch())) {
-        console.log(row);
+    for (let i = 0; i < 50; i++) {
+        dt.add(1, [1, 1]);
+        dt.add(0, [1, 0]);
+        dt.add(0, [0, 1]);
+        dt.add(0, [0, 0]);
+    }
+    const cursor = dt.get_random_cursor();
+
+
+    let epoch;
+    let x = 0;
+    while ((epoch = cursor.fetch())) {
+        //console.log(row);
+        console.info("epoch: " + cursor.get_current_epoch());
+        let y = [];
+
+        let out = nn.train(epoch.X, epoch.Y);
+        let ext = {
+            y:[],
+            x:[]
+        };
+        let n  = [];
+        x++;
+        nn.W1.map((row, i) => {
+            row.map((weight, ii) => {
+                ext.y.push([weight]);
+                ext.x.push([x]);
+                n.push(n.length);
+            });
+        });
+        Plotly.extendTraces('graph-div', ext, n);
+        let prediction = out.prediction[0];
+        let error = out.error;
+
+
+        let pred = [];
+        for (let i = 0; i < prediction.length; i++) {
+            pred[i] = {
+                number: i,
+                accuracy: prediction[i]
+            };
+        }
+
+        // sort the other array
+        for (let i = 0; i < pred.length - 1; i++) {
+            for (let j = i + 1; j < pred.length; j++) {
+                if (pred[i].accuracy < pred[j].accuracy) {
+                    let s = pred[i];
+                    pred[i] = pred[j];
+                    pred[j] = s;
+                }
+            }
+        }
+        console.info("X: " + JSON.stringify(epoch.X) + "real :" + JSON.stringify(epoch.Y));
+        console.info("prediction: " + JSON.stringify(pred));
+        console.info("error: " + JSON.stringify(error));
+        console.log();
     }
 
-    for (let row = cursor.fetch(); row; row = cursor.fetch()) {
-        console.log(JSON.stringify(row.X) + "  y:" + JSON.stringify(row.Y));
+    function calc_pred(prediction, expected) {
+        let pred = [];
+        for (let i = 0; i < prediction.length; i++) {
+            pred[i] = {
+                number: i,
+                accuracy: prediction[i]
+            };
+        }
+
+        // sort the other array
+        for (let i = 0; i < pred.length - 1; i++) {
+            for (let j = i + 1; j < pred.length; j++) {
+                if (pred[i].accuracy < pred[j].accuracy) {
+                    let s = pred[i];
+                    pred[i] = pred[j];
+                    pred[j] = s;
+                }
+            }
+        }
+        console.log("expected: " + expected + " got: " + Math.round(pred[0].number) + "(" + Math.round(pred[0].accuracy * 10000)/100 + "%)");
     }
-    // console.log(dt.export_dataset());
+
+    calc_pred(nn.test([1, 1]), 1);
+    calc_pred(nn.test([1, 0]), 0);
+    calc_pred(nn.test([0, 1]), 0);
+    calc_pred(nn.test([0, 0]), 0);
 }
+
+pretest();
