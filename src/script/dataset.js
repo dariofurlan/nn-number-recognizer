@@ -1,7 +1,9 @@
 import NeuralNetwork from "./neural_network";
+
 const Plotly = require('plotly.js');
 
-// todo in the augmentation set a limit and then flatten the dataset
+// todo center all the data
+// todo zoom all the data so that it fits onto the full matrix
 
 function download(text) {
     let element = document.createElement('a');
@@ -229,7 +231,16 @@ export default function Dataset() {
         }
         this.import_dataset(new_dataset);
         augmented = true;
-        this.download();
+    };
+    this.limit = (limit = 200) => {
+        for (let key in this.dataset) {
+            if (this.dataset[key].length>limit) {
+                while (this.dataset[key].length>limit) {
+                    let ran = Math.floor(Math.random()*this.dataset[key].length);
+                    this.dataset[key].splice(ran,1);
+                }
+            }
+        }
     };
 
     /* ----------------------AUGMENTATION---------------------- */
@@ -275,12 +286,14 @@ function Cursor(ds, num_epochs) {
 
 function pretest() {
     dt = new Dataset();
-    nn = new NeuralNetwork(2,3,2);
+    nn = new NeuralNetwork(2, 3, 2);
     setTimeout(test, 200);
 }
 
 let dt;
 let nn;
+
+// pretest();
 
 function test() {
     let tracesW1 = [];
@@ -288,45 +301,46 @@ function test() {
     nn.W1.map((row, i) => {
         row.map((weight, ii) => {
             let trace = {
-                y:[weight],
-                x:[0],
-                name: 'W'+(i+1)+'-'+(ii+1),
+                y: [weight],
+                x: [0],
+                name: 'W' + (i + 1) + '-' + (ii + 1),
                 mode: 'line'
             };
-           tracesW1.push(trace);
+            tracesW1.push(trace);
         });
     });
     nn.W2.map((row, i) => {
         row.map((weight, ii) => {
             let trace = {
-                y:[weight],
-                x:[0],
-                name: 'W'+(i+1)+'-'+(ii+1),
-                type:'line'
+                y: [weight],
+                x: [0],
+                name: 'W' + (i + 1) + '-' + (ii + 1),
+                type: 'line'
             };
             tracesW2.push(trace);
         });
     });
     let error_trace = {
-        y:[],
-        x:[],
+        y: [],
+        x: [],
         name: "Error",
         type: 'line'
     };
-    Plotly.newPlot('graph-W1', tracesW1, {title:"Weights Input->Hidden"}, {responsive:true});
-    Plotly.newPlot('graph-W2', tracesW2, {title:"Weights Hidden->Output"}, {responsive:true});
-    Plotly.newPlot('graph-error', [error_trace], {title:"Total Error"}, {responsive:true});
+    Plotly.newPlot('graph-W1', tracesW1, {title: "Weights Input->Hidden"}, {responsive: true});
+    Plotly.newPlot('graph-W2', tracesW2, {title: "Weights Hidden->Output"}, {responsive: true});
+    Plotly.newPlot('graph-error', [error_trace], {title: "Total Error"}, {responsive: true});
 
-    train();
+    for (let i = 0; i < 1; i++) {
+        dt.add(0, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        dt.add(1, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        dt.add(2, [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    }
+    //train();
 }
 
+
 function train() {
-    for (let i = 0; i < 50; i++) {
-        dt.add(1, [1, 1]);
-        dt.add(0, [1, 0]);
-        dt.add(0, [0, 1]);
-        dt.add(0, [0, 0]);
-    }
+
     const cursor = dt.get_random_cursor();
 
 
@@ -339,10 +353,10 @@ function train() {
 
         let out = nn.train(epoch.X, epoch.Y);
         let ext = {
-            y:[],
-            x:[]
+            y: [],
+            x: []
         };
-        let n  = [];
+        let n = [];
         x++;
         nn.W1.map((row, i) => {
             row.map((weight, ii) => {
@@ -352,10 +366,10 @@ function train() {
             });
         });
         let ext2 = {
-            y:[],
-            x:[]
+            y: [],
+            x: []
         };
-        let n2  = [];
+        let n2 = [];
         nn.W2.map((row, i) => {
             row.map((weight, ii) => {
                 ext2.y.push([weight]);
@@ -364,8 +378,8 @@ function train() {
             });
         });
         let ext_error = {
-            y:[[out.error]],
-            x:[[e]]
+            y: [[out.error]],
+            x: [[e]]
         };
         Plotly.extendTraces('graph-W1', ext, n);
         Plotly.extendTraces('graph-W2', ext2, n2);
@@ -420,7 +434,7 @@ function train() {
                 }
             }
         }
-        console.log("expected: " + expected + " got: " + Math.round(pred[0].number) + "(" + Math.round(pred[0].accuracy * 10000)/100 + "%)");
+        console.log("expected: " + expected + " got: " + Math.round(pred[0].number) + "(" + Math.round(pred[0].accuracy * 10000) / 100 + "%)");
     }
 
     calc_pred(nn.test([1, 1]), 1);

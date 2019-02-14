@@ -103,11 +103,13 @@ export function AugmentDataset() {
         });
     };
 
-    let step_0 = (parsed_content) => {
-        btn_group.removeChild(btn1);
-        new Dataset(parsed_content).augment();
+    let step_0 = () => {
+        console.log("augmenting");
         loaded_ds.augment();
-        setTimeout(drawer.trainer.dataset.augment, 0);
+        console.log("limiting");
+        loaded_ds.limit(500);
+        console.log("downloading...");
+        loaded_ds.download();
     };
 }
 
@@ -348,31 +350,19 @@ export function TestFeature() { // TODO just for dev purpose
     let step_2 = () => {
         step_0();
     };
-
-    /*let old_step2 = () => {
-        let pred = trainer.test();
-        //error = Math.round(error * 1000000) / 10000;
-        msg_list.innerHTML = "";
-        for (let i = 0; i < pred.length; i++) {
-            let acc = Math.round(pred[i].accuracy * 1000000) / 10000;
-            msg_list.innerHTML += pred[i].number + ") " + acc + "<br/>";
-        }
-        let acc = Math.round(pred[0].accuracy * 10000) / 100;
-        let best_pred = pred[0].number;
-        msg_list.innerHTML = "al <b>" + acc + "</b>% il numero disegnato è: <b>" + best_pred + "</b>";
-        step_0();
-        //msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
-    };*/
 }
 
 export function Loader_n_Trainer() {
     let dataset = new Dataset;
     let nn = drawer.trainer.nn;
-    let e=0, x=1;
+    let e = 0, x = 1;
 
     this.start = () => {
         Trainer.remote_load().then(parsed => {
             dataset.import_dataset(parsed);
+            console.info("Browser may slow down: Augmenting...");
+            dataset.augment();
+            dataset.limit(100);
             prepare();
         }).catch(reason => console.error(reason));
     };
@@ -402,15 +392,30 @@ export function Loader_n_Trainer() {
                 tracesW2.push(trace);
             });
         });*/
-        let error_trace = {
-            y:[],
-            x:[],
+        /*let error_trace = [];
+        for (let i = 0; i < nn.outputLayerSize; i++) {
+            error_trace.push({
+                y: [],
+                x: [],
+                name: "Error - " + i,
+                type: 'line',
+                line: {
+                    width: 1
+                }
+            });
+        }*/
+        let error_trace = [{
+            y: [],
+            x: [],
             name: "Error",
-            type: 'line'
-        };
+            type: 'line',
+            line: {
+                width: 1
+            }
+        }];
         // Plotly.newPlot('graph-W1', tracesW1, {title:"Weights Input->Hidden"}, {responsive:true});
         // Plotly.newPlot('graph-W2', tracesW2, {title:"Weights Hidden->Output"}, {responsive:true});
-        Plotly.newPlot('graph-error', [error_trace], {title:"Total Error"}, {responsive:true});
+        Plotly.newPlot('graph-error', error_trace, {title: "Avg Error"}, {responsive: true});
         step_0();
     };
 
@@ -421,10 +426,10 @@ export function Loader_n_Trainer() {
 
             let out = nn.train([drawer.trainer.X], [Y]);
             let ext = {
-                y:[],
-                x:[]
+                y: [],
+                x: []
             };
-            let n  = [];
+            let n = [];
             x++;
             /*nn.W1.map((row) => {
                 row.map((weight) => {
@@ -434,10 +439,10 @@ export function Loader_n_Trainer() {
                 });
             });*/
             let ext2 = {
-                y:[],
-                x:[]
+                y: [],
+                x: []
             };
-            let n2  = [];
+            let n2 = [];
             /*nn.W2.map((row) => {
                 row.map((weight) => {
                     ext2.y.push([weight]);
@@ -445,13 +450,26 @@ export function Loader_n_Trainer() {
                     n2.push(n2.length);
                 });
             });*/
-            let ext_error = {
-                y:[[out.error]],
-                x:[[e]]
+
+            /*let ext_error = {
+                y:[],
+                x:[]
             };
+            let ne = [];
+            for (let i=0; i<nn.outputLayerSize;i++) {
+                ext_error.y.push([out.error[0][i]]);
+                ext_error.x.push([e]);
+                ne.push(ne.length);
+            }*/
+            const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
+            let ext_error = {
+                y: [[average(out.error[0])]],
+                x: [[e]]
+            };
+            let ne = [0];
             //Plotly.extendTraces('graph-W1', ext, n);
             //Plotly.extendTraces('graph-W2', ext2, n2);
-            Plotly.extendTraces('graph-error', ext_error, [0]);
+            Plotly.extendTraces('graph-error', ext_error, ne);
             e++;
             x++;
 
@@ -497,7 +515,7 @@ export function Loader_n_Trainer() {
                         train_step(epoch.X[i], epoch.Y[i]);
                         i++
                     } else {
-                        setTimeout(ab, 1000);
+                        setTimeout(ab, 500);
                         return;
                     }
                     setTimeout(ac, 50);
@@ -549,13 +567,10 @@ export function Loader_n_Trainer() {
     });
 
     let step_1 = () => {
-        //console.log("step_0");
         drawer.trainer.reset();
         drawer.enable();
     };
-    // ended drawing: pooling
     let step_2 = () => {
-        //console.log("step_1");
         drawer.disable();
         drawer.trainer.max_pooling();
         let pred = drawer.trainer.test();

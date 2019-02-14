@@ -51,7 +51,7 @@ export default class NeuralNetwork {
 
         let errors = math.multiply(0.5, math.square(math.subtract(y, y_hat)));
         let J = math.sum(errors);
-        return J;
+        return errors;
     }
 
     costFunctionPrime(X, y) {
