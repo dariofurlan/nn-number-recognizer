@@ -47,7 +47,6 @@ export default class Trainer extends EventEmitter {
                 }
             }
         } catch (e) {
-            console.error(e);
             return false;
         }
         return true;

@@ -76,7 +76,6 @@ class Drawer extends EventEmitter {
         this.loading_overlay = new LoadingOverlay();
         this.canvas = document.getElementById('canvas');
         this.parent = document.getElementById('half-left');
-        this.general_progress_bar = document.getElementById('prg1');
         this.timer_progress_bar = document.getElementById('timer');
         this.ctx = this.canvas.getContext("2d");
         this.timer = new Timer();
@@ -210,11 +209,6 @@ class Drawer extends EventEmitter {
         if (pos > this.trainer.X.length)
             return this.trainer.X.length;
         return pos;
-    }
-
-    update_progress_train(percent) {
-        this.general_progress_bar.style.width = percent + "%";
-        this.general_progress_bar.innerText = "training: " + percent + "%";
     }
 
     update_progress_timer(percent) {

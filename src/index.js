@@ -12,6 +12,8 @@ import * as Actions from './script/actions';
 // TODO  improve the navigation bar
 // TODO  gradually remove Trainer Class
 
+// TODO  make a thing like action for all the things that you can do with the dataset
+
 const btn_group = document.getElementById('btn-group');
 
 const actions = Object.keys(Actions);

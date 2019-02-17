@@ -29,6 +29,70 @@ export default function Dataset() {
     this._import = (array_str) => {
         return array_str.split("").map(Number);
     };
+    this._center = (X) => {
+        let ns = Math.sqrt(X.length);
+        let bounds = calculate_figure_bounds(X, ns);
+        let dx = Math.floor((bounds.delta.x.right - bounds.delta.x.left) / 2);
+        let dy = Math.floor((bounds.delta.y.down - bounds.delta.y.up) / 2);
+        return this._move(X, ns, dx, dy);
+    };
+    this._move = (X, ns, delta_x = 0, delta_y = 0) => {
+        if (delta_x === 0 && delta_y === 0)
+            return X;
+        let loop_y = {
+            start: (delta_y > 0) ? (ns - 1) : 0,
+            condition: (delta_y > 0) ? (y) => {
+                return y >= 0
+            } : (y) => {
+                return y < ns
+            },
+            border_check: (delta_y > 0) ? (y) => {
+                return y + delta_y > (ns - 1)
+            } : (y) => {
+                return y + delta_y < 0
+            },
+            inc: (delta_y > 0) ? -1 : +1,
+        };
+        let loop_x = {
+            start: (delta_x > 0) ? (ns - 1) : 0,
+            condition: (delta_x > 0) ? (x) => {
+                return x >= 0
+            } : (x) => {
+                return x < ns
+            },
+            border_check: (delta_x > 0) ? (x) => {
+                return x + delta_x > (ns - 1)
+            } : (x) => {
+                return x + delta_x < 0
+            },
+            inc: (delta_x > 0) ? -1 : +1,
+        };
+        for (let y = loop_y.start; loop_y.condition(y); y += loop_y.inc) {
+            for (let x = loop_x.start; loop_x.condition(x); x += loop_x.inc) {
+                let pos = (y * ns) + x;
+                if (X[pos] === 0)
+                    continue;
+                if (delta_x !== 0) {
+                    if (loop_x.border_check(x)) {
+                        X[pos] = 0;
+                    } else {
+                        X[pos + delta_x] = X[pos];
+                        X[pos] = 0;
+                        pos += delta_x;
+                    }
+                }
+                if (delta_y !== 0) {
+                    if (loop_y.border_check(y)) {
+                        X[pos] = 0;
+                    } else {
+                        X[pos + (delta_y * ns)] = X[pos];
+                        X[pos] = 0;
+                    }
+                }
+            }
+        }
+        return X;
+    };
 
     this.add = (y, X) => {
         if (y === undefined)
@@ -73,7 +137,13 @@ export default function Dataset() {
         }
     };
     this.center_dataset = () => {
-        // TODO is this needed ?
+        let cursor = this.get_ordered_cursor();
+        let epoch;
+        while ((epoch = cursor.fetch())) {
+            for (let i = 0; i < epoch.length; i++) {
+                this._center(epoch.X[i]);
+            }
+        }
     };
     this.flatten_dataset = () => {
         const flattened_dataset = {X: [], Y: [], length: 0};
@@ -105,6 +175,11 @@ export default function Dataset() {
     };
     this.get_random_cursor = (num_epochs) => {
         return new Cursor(this.shuffle_dataset(), num_epochs);
+    };
+    this.empty = () => {
+        for (let key in this.dataset) {
+            this.dataset[key] = [];
+        }
     };
     let array_equals = (arr1, arr2) => {
         return arr1.every((value, index) => value === arr2[index]);
@@ -148,62 +223,6 @@ export default function Dataset() {
         };
         return {bounds: bound, delta: delta};
     };
-    let move = (X, ns, delta_x = 0, delta_y = 0) => {
-        const nX = X.slice();
-        let loop_y = {
-            start: (delta_y > 0) ? (ns - 1) : 0,
-            condition: (delta_y > 0) ? (y) => {
-                return y >= 0
-            } : (y) => {
-                return y < ns
-            },
-            border_check: (delta_y > 0) ? (y) => {
-                return y + delta_y > (ns - 1)
-            } : (y) => {
-                return y + delta_y < 0
-            },
-            inc: (delta_y > 0) ? -1 : +1,
-        };
-        let loop_x = {
-            start: (delta_x > 0) ? (ns - 1) : 0,
-            condition: (delta_x > 0) ? (x) => {
-                return x >= 0
-            } : (x) => {
-                return x < ns
-            },
-            border_check: (delta_x > 0) ? (x) => {
-                return x + delta_x > (ns - 1)
-            } : (x) => {
-                return x + delta_x < 0
-            },
-            inc: (delta_x > 0) ? -1 : +1,
-        };
-        for (let y = loop_y.start; loop_y.condition(y); y += loop_y.inc) {
-            for (let x = loop_x.start; loop_x.condition(x); x += loop_x.inc) {
-                let pos = (y * ns) + x;
-                if (nX[pos] === 0)
-                    continue;
-                if (delta_x !== 0) {
-                    if (loop_x.border_check(x)) {
-                        nX[pos] = 0;
-                    } else {
-                        nX[pos + delta_x] = nX[pos];
-                        nX[pos] = 0;
-                        pos += delta_x;
-                    }
-                }
-                if (delta_y !== 0) {
-                    if (loop_y.border_check(y)) {
-                        nX[pos] = 0;
-                    } else {
-                        nX[pos + (delta_y * ns)] = nX[pos];
-                        nX[pos] = 0;
-                    }
-                }
-            }
-        }
-        return nX;
-    };
     let all_possible_movements = (y, X) => {
         const new_dataset = [];
         const ns = Math.sqrt(X.length);
@@ -212,7 +231,7 @@ export default function Dataset() {
             for (let dx = -delta.x.left; dx <= delta.x.right; dx++) {
                 if (dx === 0 && dy === 0)
                     continue;
-                let new_X = move(X, ns, dx, dy);
+                let new_X = this._move(X.slice(), ns, dx, dy);
                 new_dataset.push(this._export(new_X));
             }
         }
@@ -234,10 +253,10 @@ export default function Dataset() {
     };
     this.limit = (limit = 200) => {
         for (let key in this.dataset) {
-            if (this.dataset[key].length>limit) {
-                while (this.dataset[key].length>limit) {
-                    let ran = Math.floor(Math.random()*this.dataset[key].length);
-                    this.dataset[key].splice(ran,1);
+            if (this.dataset[key].length > limit) {
+                while (this.dataset[key].length > limit) {
+                    let ran = Math.floor(Math.random() * this.dataset[key].length);
+                    this.dataset[key].splice(ran, 1);
                 }
             }
         }
@@ -294,7 +313,6 @@ let dt;
 let nn;
 
 // pretest();
-
 function test() {
     let tracesW1 = [];
     let tracesW2 = [];
@@ -337,7 +355,6 @@ function test() {
     }
     //train();
 }
-
 
 function train() {
 

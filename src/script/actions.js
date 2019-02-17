@@ -11,6 +11,32 @@ const drawer = new Drawer();
 /*-------------------------ACTIONS---------------------------*/
 drawer.disable();
 document.getElementById('canvas-header').hidden = true;
+export function DatasetOperations() {
+    let dataset = new Dataset();
+
+    let btn1 = document.createElement("button");
+    btn_group.appendChild(btn1);
+    btn1.hidden = false;
+    btn1.disabled = false;
+    btn1.className = "btn btn-outline-primary";
+    btn1.innerText = "Load Dataset";
+    Trainer.load_file_check(btn1).then(parsed_content => {
+        dataset.import_dataset(parsed_content);
+        // now shows all the operations
+    });
+
+    this.EmptyDataset = function () {
+        dataset.empty();
+    };
+
+    this.start = () => {
+
+    };
+
+    let operations = Object.keys(this);
+    delete operations["start"];
+    console.log(operations);
+}
 
 export function ShowDataset() {
     let btn1 = document.createElement("button");
@@ -24,7 +50,6 @@ export function ShowDataset() {
         btn1.className = "btn btn-outline-primary";
         btn1.innerText = "Load Dataset";
         Trainer.load_file_check(btn1).then(parsed_content => {
-            ;
             loaded_ds.import_dataset(parsed_content);
             btn1.outerHTML = "";
             stats(parsed_content);
@@ -123,8 +148,6 @@ export function NewDataset() {
 
     let Y = Trainer.get_train_Y();
     let i = 0;
-    let c = 0;
-    let max_c = 5;
 
     drawer.removeAllListeners("drawing");
     drawer.removeAllListeners("timer progress");
@@ -133,19 +156,12 @@ export function NewDataset() {
     drawer.on("drawing", () => drawer.reset_timer());
     drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
     drawer.on("timer end", () => {
-        step2();
+        step_2();
         drawer.update_progress_timer(0);
     });
 
     this.start = () => {
-        btn1.hidden = false;
-        btn1.disabled = false;
-        btn1.className = "btn btn-outline-primary";
-        btn1.innerText = "Load Dataset";
-        Trainer.load_file_check(btn1).then(parsed_content => {
-            ds.import_dataset(parsed_content);
-            step_0();
-        });
+        step_0()
     };
 
     let step_0 = () => {
@@ -161,24 +177,16 @@ export function NewDataset() {
 
     let step_1 = () => {
         if (i > Y.length - 1) {
-            c++;
             i = 0;
-        }
-        if (c === max_c) {
-            drawer.trainer.reset();
-            ds.download();
-            return;
         }
         drawer.trainer.reset();
         msg_y.innerText = Y[i];
         drawer.enable();
     };
 
-    let step2 = () => {
+    let step_2 = () => {
         drawer.disable();
-        drawer.update_progress_train(Math.floor((c * max_c + i + 1) * 100 / (Y.length * max_c))); // ToDo fix this percentage, please
         ds.add(Y[i], drawer.trainer.X);
-        //trainer.augment();
         i++;
         step_1();
     };
@@ -306,13 +314,35 @@ export function ApproveDataset() {
     };
 }
 
-export function TestFeature() { // TODO just for dev purpose
-    let y;
+export function CenterDataset() {
+    let btn1 = document.createElement("button");
+    btn_group.appendChild(btn1);
 
+    let loaded_ds = new Dataset();
+
+    this.start = () => {
+        btn1.hidden = false;
+        btn1.disabled = false;
+        btn1.className = "btn btn-outline-primary";
+        btn1.innerText = "Load Dataset";
+        Trainer.load_file_check(btn1).then(parsed_content => {
+            loaded_ds.import_dataset(parsed_content);
+            btn1.outerHTML = "";
+            center();
+        });
+    };
+
+    let center = () => {
+        loaded_ds.center_dataset();
+        loaded_ds.download();
+    };
+}
+
+export function TestFeature() { // TODO just for dev purpose
     let trace1 = {x: [1, 2, 3, 4], y: [1, 2, 3, 4], type: 'scatter', name: 'Error'};
     let trace2 = {x: [1, 2, 3, 4], y: [2, 3, 4, 5], type: 'scatter'};
 
-    let ds;
+    let ds = new Dataset();
 
     document.getElementById('canvas-header').hidden = true;
     drawer.removeAllListeners("drawing");
@@ -334,21 +364,20 @@ export function TestFeature() { // TODO just for dev purpose
     let step_0 = () => {
         //console.log("step_0");
         drawer.trainer.reset();
-        y = Trainer.get_test_y();
-        msg_y.innerText = y;
         drawer.enable();
     };
     // ended drawing: pooling
     let step_1 = () => {
         //console.log("step_1");
         drawer.disable();
-        ds.add(y, drawer.trainer.X);
-        ds.augment();
-        //setTimeout(step_2, 250);
+        ds.add(0, drawer.trainer.X);
+        ds.center_dataset();
+        setTimeout(step_2, 250);
     };
     // test and output
     let step_2 = () => {
-        step_0();
+        drawer.trainer.import_into_X(ds.dataset[0][0]);
+        //step_0();
     };
 }
 
