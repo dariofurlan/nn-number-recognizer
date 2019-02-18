@@ -31,9 +31,9 @@ export default function Dataset() {
     };
     this._center = (X) => {
         let ns = Math.sqrt(X.length);
-        let bounds = calculate_figure_bounds(X, ns);
-        let dx = Math.floor((bounds.delta.x.right - bounds.delta.x.left) / 2);
-        let dy = Math.floor((bounds.delta.y.down - bounds.delta.y.up) / 2);
+        let {delta} = calculate_figure_bounds(X, ns);
+        let dx = Math.floor((delta.x.right - delta.x.left) / 2);
+        let dy = Math.floor((delta.y.down - delta.y.up) / 2);
         return this._move(X, ns, dx, dy);
     };
     this._move = (X, ns, delta_x = 0, delta_y = 0) => {
@@ -93,6 +93,49 @@ export default function Dataset() {
         }
         return X;
     };
+    this._fit = (X) => {
+        let ns = Math.sqrt(X.length);
+        let {bounds} = calculate_figure_bounds(X, ns);
+        let width = bounds.x.max - bounds.x.min + 1;
+        let height = bounds.y.max - bounds.y.min + 1;
+        let ratio = (width > height) ? ns / width : ns / height;
+        let new_width = Math.round(width * ratio);
+        let new_height = Math.round(height * ratio);
+        console.log("ratio: " + ratio + " w: " + new_width + " h: " + new_height);
+
+        let start_y = (ns - new_height) / 2;
+        let start_x = (ns - new_width) / 2;
+        let end_y = (ns + new_height) / 2;
+        let end_x = (ns + new_width) / 2;
+        start_y = Math.round(start_y);
+        start_x = Math.round(start_x);
+        end_y = Math.round(end_y);
+        end_x = Math.round(end_x);
+        // ratio = Math.round(ratio);
+
+        console.log("starty: " + start_y + " startx: " + start_x + " endy: " + end_y + " endx: " + end_x);
+        for (let y = bounds.y.min, slidey = start_y; y <= bounds.y.max; y++, slidey+=ratio) {
+            for (let x = bounds.x.min, slidex = start_x; x <= bounds.x.max; x++, slidex+=ratio) {
+                let pos = (y * ns) + x;
+                if (X[pos] !== 0) {
+                    let val = X[pos];
+                    //X[pos] = 0;
+                    console.info(y + ":"+x);
+                    for (let yy = Math.round(slidey); yy < slidey + ratio && yy<end_y; yy++) {
+                        for (let xx = Math.round(slidex); xx < slidex + ratio && xx<end_x; xx++) {
+                            console.log(yy + "-" + xx);
+                            let pos2 = Math.round((yy * ns) + xx);
+                            X[pos2] = val; // todo check that they don't collide
+
+                        }
+                    }
+
+                    console.log();
+                    //console.log(y + "-" + x);
+                }
+            }
+        }
+    };
 
     this.add = (y, X) => {
         if (y === undefined)
@@ -136,12 +179,31 @@ export default function Dataset() {
                 }
         }
     };
+    this.limit = (limit = 200) => {
+        for (let key in this.dataset) {
+            if (this.dataset[key].length > limit) {
+                while (this.dataset[key].length > limit) {
+                    let ran = Math.floor(Math.random() * this.dataset[key].length);
+                    this.dataset[key].splice(ran, 1);
+                }
+            }
+        }
+    };
     this.center_dataset = () => {
         let cursor = this.get_ordered_cursor();
         let epoch;
         while ((epoch = cursor.fetch())) {
             for (let i = 0; i < epoch.length; i++) {
                 this._center(epoch.X[i]);
+            }
+        }
+    };
+    this.stretch_dataset = () => {
+        let cursor = this.get_ordered_cursor();
+        let epoch;
+        while ((epoch = cursor.fetch())) {
+            for (let i = 0; i < epoch.length; i++) {
+                this._fit(epoch.X[i]);
             }
         }
     };
@@ -251,16 +313,7 @@ export default function Dataset() {
         this.import_dataset(new_dataset);
         augmented = true;
     };
-    this.limit = (limit = 200) => {
-        for (let key in this.dataset) {
-            if (this.dataset[key].length > limit) {
-                while (this.dataset[key].length > limit) {
-                    let ran = Math.floor(Math.random() * this.dataset[key].length);
-                    this.dataset[key].splice(ran, 1);
-                }
-            }
-        }
-    };
+
 
     /* ----------------------AUGMENTATION---------------------- */
     this.train = () => {

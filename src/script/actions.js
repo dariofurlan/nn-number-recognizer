@@ -311,8 +311,6 @@ export function ApproveDataset() {
 }
 
 export function TestFeature() { // TODO just for dev purpose
-    let trace1 = {x: [1, 2, 3, 4], y: [1, 2, 3, 4], type: 'scatter', name: 'Error'};
-    let trace2 = {x: [1, 2, 3, 4], y: [2, 3, 4, 5], type: 'scatter'};
 
     let ds = new Dataset();
 
@@ -344,6 +342,7 @@ export function TestFeature() { // TODO just for dev purpose
         drawer.disable();
         ds.add(0, drawer.trainer.X);
         ds.center_dataset();
+        ds.stretch_dataset();
         setTimeout(step_2, 250);
     };
     // test and output
