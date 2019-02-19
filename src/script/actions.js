@@ -27,31 +27,43 @@ export function DatasetOperations() {
     btns["load dataset"].innerText = "Load Dataset";
     Trainer.load_file_check(btns["load dataset"]).then(parsed_content => {
         dataset.import_dataset(parsed_content);
-        let operations = Object.keys(this);
-        for (let i = 0; i < operations.length; i++) { // todo instead of declaring this way, declare it one by one
-            let key = operations[i];
-            btns[key] = document.createElement('button');
-            btns[key].innerText = key;
-            btns[key].id = key;
-            btns[key].className = "btn btn-outline-success";
-            btns[key].onclick = () => {
-                new this[key]().start();
-                stats();
-            };
-            btn_group.appendChild(btns[key]);
-        }
+        new Show();
+        new Empty();
+        new Clean();
+        new Augment();
+        new Center();
+        new Download();
+        stats();
     });
 
-    let stats = (loaded) => {// todo do stats of the dataset class
+    // todo button for load file
+
+    class Base {
+        constructor(nome, id = nome) {
+            this.btn = document.createElement('button');
+            this.btn.innerText = nome;
+            this.btn.id = id;
+            this.btn.className = "btn btn-primary";
+            this.btn.onclick = this.onclick;
+            btn_group.appendChild(this.btn);
+        }
+
+        onclick() {
+            stats();
+        }
+    }
+
+    let stats = () => {
         div_stats.innerHTML = "";
         let stat = {
             num_len: {},
             total_len: 0,
         };
-        for (let key in loaded) {
-            stat.num_len[key] = loaded[key].length;
-            stat.total_len += loaded[key].length;
+        for (let key in dataset.dataset) {
+            stat.num_len[key] = dataset.dataset[key].length;
+            stat.total_len += dataset.dataset[key].length;
         }
+
         div_stats.innerHTML = "<b>Campioni per ciascun numero:</b><br/>";
         for (let key in stat.num_len) {
             div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
@@ -59,16 +71,28 @@ export function DatasetOperations() {
         div_stats.innerHTML += "<b>Numero totale di campioni: </b>" + stat.total_len + "<br/>";
     };
 
-    this.Empty = function () {
-        this.start = () => {
+    class Empty extends Base {
+        constructor() {
+            super("Empty", "empty");
+        }
+
+        onclick() {
+            dataset.empty();
+            super.onclick();
+        }
+
+        start() {
             dataset.empty();
             stats();
-        };
-    };
+        }
+    }
 
-    this.Show = function () {
-        // todo do a sort of stop button to interrupt
-        this.start = () => {
+    class Show extends Base {
+        constructor() {
+            super("Show", "show");
+        }
+
+        onclick() {
             let ab = () => {
                 let epoch = epoch_cursor.fetch();
                 if (!epoch)
@@ -96,38 +120,63 @@ export function DatasetOperations() {
             };
             let epoch_cursor = dataset.get_ordered_cursor();
             ab();
-        };
-    };
+        }
+    }
 
-    this.Center = function () {
-        this.start = () => {
+    class Center extends Base {
+        constructor() {
+            super('Center', 'center');
+        }
+
+        onclick() {
             dataset.center_dataset();
-        };
-    };
+            super.onclick();
+        }
+    }
 
-    this.Augment = function () {
-        this.start = () => {
+    class Augment extends Base {
+        constructor() {
+            super('Augment', 'augment');
+        }
+
+        onclick() {
             dataset.augment();
-        };
-    };
+            super.onclick();
+        }
+    }
 
-    this.Clean = function () {
-        this.start = () => {
+    class Clean extends Base {
+        constructor() {
+            super('Clean', 'clean');
+        }
+
+        onclick() {
             dataset.clean_duplicates();
-        };
-    };
+            super.onclick();
+        }
+    }
 
-    this.Download = function () {
-        this.start = () => {
+    class Download extends Base {
+        constructor() {
+            super('Download', 'Download');
+        }
+
+        onclick() {
             dataset.download();
-        };
-    };
+            super.onclick();
+        }
+    }
 
-    this.Limit = function () {
-        this.start = () => {
+    class Limit extends Base {
+        constructor() {
+            super('Limit', 'limit');
+        }
 
-        };
-    };
+        onclick() {
+            dataset.limit();// todo give  number of lines to limit
+            super.onclick();
+        }
+    }
 
     this.start = () => {
         delete this.start;

@@ -93,7 +93,7 @@ export default function Dataset() {
         }
         return X;
     };
-    this._fit = (X) => {
+    this._fit = (X) => { // todo use mipmap method
         let ns = Math.sqrt(X.length);
         let {bounds} = calculate_figure_bounds(X, ns);
         let width = bounds.x.max - bounds.x.min + 1;
