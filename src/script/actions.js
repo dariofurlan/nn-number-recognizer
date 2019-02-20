@@ -6,284 +6,369 @@ const Plotly = require('plotly.js');
 const msg_y = document.getElementById('msg-y');
 const msg_list = document.getElementById('msg-list');
 const btn_group = document.getElementById('btn-group');
+const div_stats = document.createElement('div');
+msg_list.parentNode.appendChild(div_stats);
 const drawer = new Drawer();
 
 /*-------------------------ACTIONS---------------------------*/
 drawer.disable();
 document.getElementById('canvas-header').hidden = true;
 
-export function DatasetOperations() {
-    const dataset = new Dataset();
-    const div_stats = document.createElement('div');
-    msg_list.parentNode.appendChild(div_stats);
+const dataset = new Dataset();
 
-    class Page {
-        constructor(array) {
-            this.pages = [];
-            if (array.constructor === Array)
-                array.forEach( el => this.pages.push(el));
-        }
-
-        add(el) {
-            this.pages.push(el);
-        }
-
-        createAll() {
-            this.pages.forEach(el => el.create());
-        }
-
-        removeAll() {
-            this.pages.forEach(el=>el.remove());
-        }
+class Pages {
+    constructor(root_page) {
+        this.pages = [root_page];
+        this.actual_page = 0;
     }
 
-    class Base {
-        constructor(name, id) {
-            if (!name || !id) {
-                throw Error("Name and/or id not given!");
-            }
-            this.name = name;
-            this.id = id;
-            this.btn = document.getElementById(id);
-            this.keep = true;
-        }
+    show() {
+        // this.pagesTree();
+        if (this.pages.length !== 0) {
+            if (this.actual_page !== 0) {
+                let back = new BtnBase("<- Back", "back");
 
-        create() {
-            if (!this.btn) {
-                this.btn = document.createElement('button');
-                this.btn.innerText = this.name;
-                this.btn.id = this.id;
-                this.btn.className = "btn btn-primary";
-                this.btn.onclick = this.onclick;
-                btn_group.appendChild(this.btn);
+                back.create();
+                back.show_stats = false;
+                back.btn.className = "btn btn-warning";
+                back.btn.onclick = this.backPage.bind(this);
             }
         }
-
-        onclick() {
-            stats();
-        }
-
-        remove() {
-            btn_group.removeChild(this.btn);
-            this.btn = null;
-        }
-
-        stop() {
-            this.keep = false;
-        }
+        this.pages[this.actual_page].createAll();
     }
 
-    class Load extends Base {
-        constructor() {
-            super("Load Dataset", "load");
-            Trainer.load_file_check(this.btn).then(parsed_content => {
-                dataset.import_dataset(parsed_content);
-                new Show();
-                new Empty();
-                new Clean();
-                new Augment();
-                new Center();
-                new Limit();
-                new Download();
-                new NewDataset().remove();
-                stats();
-                this.remove();
+    addPage(page) {
+
+        this.pages.push(page);
+    }
+
+    addElementToPage(pagen, element) {
+        this.pages[pagen].add(element);
+    }
+
+    nextPage() {
+        if (this.actual_page + 1 >= this.pages.length)
+            return;
+        this.pages[this.actual_page].removeAll();
+        this.actual_page++;
+        this.show();
+    }
+
+    backPage() {
+        console.log(this.actual_page);
+        if (this.actual_page - 1 < 0)
+            return;
+        new BtnBase("Back", "back").remove();
+        this.pages[this.actual_page].removeAll();
+        this.pages.pop();
+        this.actual_page--;
+        this.show();
+    }
+
+    pagesTree() {
+        let tree = {};
+        this.pages.forEach(page => {
+            tree[page.name] = {};
+            page.elements.forEach(element => {
+                tree[page.name][element.name] = {};
             });
-        }
+        });
+
+        console.log(JSON.stringify(tree, null, 2));
     }
-
-    class NewDataset extends Base {
-        constructor() {
-            super("New Dataset", "new-dataset");
-        }
-
-        onclick() {
-            this.remove();
-            new Download();
-
-            document.getElementById('canvas-header').hidden = false;
-            drawer.updateCanvasSize();
-
-            let Y = Trainer.get_train_Y();
-            let i = 0;
-
-            drawer.removeAllListeners("drawing");
-            drawer.removeAllListeners("timer progress");
-            drawer.removeAllListeners("timer end");
-
-            drawer.on("drawing", () => drawer.reset_timer());
-            drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
-            drawer.on("timer end", () => {
-                step_2();
-                drawer.update_progress_timer(0);
-            });
-
-            let step_1 = () => {
-                if (i > Y.length - 1) {
-                    i = 0;
-                }
-                drawer.trainer.reset();
-                msg_y.innerText = Y[i];
-                drawer.enable();
-            };
-
-            let step_2 = () => {
-                drawer.disable();
-                dataset.add(Y[i], drawer.trainer.X);
-                i++;
-                stats();
-                step_1();
-            };
-
-            step_1();
-        }
-
-        remove() {
-            page1.forEach(value => value.remove());
-            super.remove();
-        }
-    }
-
-    class Empty extends Base {
-        constructor() {
-            super("Empty", "empty");
-        }
-
-        onclick() {
-            dataset.empty();
-            super.onclick();
-        }
-    }
-
-    class Show extends Base {
-        constructor() {
-            super("Show", "show");
-        }
-
-        onclick() {
-            let ab = () => {
-                let epoch = epoch_cursor.fetch();
-                if (!epoch)
-                    return;
-
-                console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
-                if (epoch.length > 1) {
-                    let i = 0;
-                    let ac = () => {
-                        if (i < epoch.length) {
-                            drawer.trainer.import_into_X(epoch.X[i]);
-                            i++
-                        } else {
-                            setTimeout(ab, 500);
-                            return;
-                        }
-                        setTimeout(ac, 50);
-                    };
-                    ac();
-                } else {
-                    drawer.trainer.import_into_X(epoch.X[0]);
-                    setTimeout(ab, 50);
-                }
-
-            };
-            let epoch_cursor = dataset.get_ordered_cursor();
-            ab();
-        }
-    }
-
-    class Center extends Base {
-        constructor() {
-            super('Center', 'center');
-        }
-
-        onclick() {
-            dataset.center_dataset();
-            super.onclick();
-        }
-    }
-
-    class Augment extends Base {
-        constructor() {
-            super('Augment', 'augment');
-        }
-
-        onclick() {
-            dataset.augment();
-            super.onclick();
-        }
-    }
-
-    class Clean extends Base {
-        constructor() {
-            super('Clean', 'clean');
-        }
-
-        onclick() {
-            dataset.clean_duplicates();
-            super.onclick();
-        }
-    }
-
-    class Download extends Base {
-        constructor() {
-            super('Download', 'Download');
-        }
-
-        onclick() {
-            dataset.download();
-            super.onclick();
-        }
-    }
-
-    class Limit extends Base {
-        constructor() {
-            super('Limit', 'limit');
-        }
-
-        onclick() {
-            dataset.limit();// todo give  number of lines to limit
-            super.onclick();
-        }
-    }
-
-    class StopAll extends Base {
-        constructor() {
-            super("Stop All", "stop-all");
-        }
-
-        onclick() {
-
-            super.onclick();
-        }
-    }
-
-    function stats() {
-        let stat = {
-            num_len: {},
-            total_len: 0,
-        };
-        for (let key in dataset.dataset) {
-            stat.num_len[key] = dataset.dataset[key].length;
-            stat.total_len += dataset.dataset[key].length;
-        }
-
-        div_stats.innerHTML = "";
-        div_stats.innerHTML = "<b>Campioni per ciascun numero:</b><br/>";
-        for (let key in stat.num_len) {
-            div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
-        }
-        div_stats.innerHTML += "<b>Numero totale di campioni: </b>" + stat.total_len + "<br/>";
-    }
-
-    this.start = () => {
-        delete this.start;
-    };
-
-    const Page1 = new Page([new Load(), new NewDataset()]);
-    Page1.createAll();
 }
 
-export function MergeDataset() {
+class Page {
+    constructor(name, array, onremove) {
+        this.elements = [];
+        this.name = name;
+        this.onremove = onremove;
+        if (array.constructor === Array)
+            array.forEach(el => this.add(el));
+    }
+
+    add(el) {
+        this.elements.push(el);
+    }
+
+    createAll() {
+        this.elements.forEach(el => el.create());
+    }
+
+    removeAll() {
+        this.elements.forEach(el => el.remove());
+        div_stats.innerText = "";
+        if (this.onremove)
+            this.onremove();
+    }
+}
+
+class BtnBase {
+    constructor(name, id) {
+        if (!name || !id) {
+            throw Error("Name and/or id not given!");
+        }
+        this.name = name;
+        this.id = id;
+        this.btn = document.getElementById(id);
+        this.show_stats = true;
+        this.keep = true;
+    }
+
+    create() {
+        if (!this.btn) {
+            this.btn = document.createElement('button');
+            this.btn.innerText = this.name;
+            this.btn.id = this.id;
+            this.btn.className = "btn btn-primary";
+            this.btn.onclick = this.onclick.bind(this);
+            btn_group.appendChild(this.btn);
+        }
+    }
+
+    onclick() {
+        stats();
+    }
+
+    remove() {
+        if (!this.btn)
+            return;
+        btn_group.removeChild(this.btn);
+        this.btn = null;
+    }
+
+    stop() {
+        this.keep = false;
+    }
+}
+
+class Load extends BtnBase {
+    constructor() {
+        super("Load Dataset", "load");
+    }
+
+    create() {
+        super.create();
+        Trainer.load_file_check(this.btn).then(parsed_content => {
+            dataset.empty();
+            dataset.import_dataset(parsed_content);
+            pages.addPage(new Page("LoadedFile", [new Show(), new Empty(), new Clean(), new Augment(), new Center(), new Limit(), new Download()]));
+            pages.nextPage();
+            stats();
+        });
+    }
+}
+
+class NewDataset extends BtnBase {
+    constructor() {
+        super("New Dataset", "new-dataset");
+    }
+
+    onclick() {
+        pages.addPage(new Page("NewDatasetPage", [new Download()]));
+        pages.nextPage();
+
+        this.remove();
+
+        document.getElementById('canvas-header').hidden = false;
+        drawer.updateCanvasSize();
+
+        let Y = Trainer.get_train_Y();
+        let i = 0;
+
+        drawer.removeAllListeners("drawing");
+        drawer.removeAllListeners("timer progress");
+        drawer.removeAllListeners("timer end");
+
+        drawer.on("drawing", () => drawer.reset_timer());
+        drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
+        drawer.on("timer end", () => {
+            step_2();
+            drawer.update_progress_timer(0);
+        });
+
+        let step_1 = () => {
+            if (i > Y.length - 1) {
+                i = 0;
+            }
+            drawer.trainer.reset();
+            msg_y.innerText = Y[i];
+            drawer.enable();
+        };
+
+        let step_2 = () => {
+            drawer.disable();
+            dataset.add(Y[i], drawer.trainer.X);
+            i++;
+            stats();
+            step_1();
+        };
+
+        step_1();
+    }
+
+    remove() {
+        //page1.forEach(value => value.remove());
+        super.remove();
+    }
+}
+
+class Empty extends BtnBase {
+    constructor() {
+        super("Empty", "empty");
+    }
+
+    onclick() {
+        dataset.empty();
+        super.onclick();
+    }
+}
+
+class Show extends BtnBase {
+    constructor() {
+        super("Show", "show");
+        console.log(this.keep);
+    }
+
+    onclick() {
+        pages.addPage(new Page("StopShow", [new StopAll(()=>{this.keep = false})]));
+        let loop1 = () => {
+            console.log(this);
+            if (!this.keep)
+                return;
+            let epoch = epoch_cursor.fetch();
+            if (!epoch)
+                return;
+
+            console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
+            if (epoch.length > 1) {
+                let i = 0;
+                let loop2 = () => {
+                    if (!this.keep)
+                        return;
+                    if (i < epoch.length) {
+                        drawer.trainer.import_into_X(epoch.X[i]);
+                        i++
+                    } else {
+                        setTimeout(loop1, 500);
+                        return;
+                    }
+                    setTimeout(loop2, 50);
+                };
+                loop2();
+            } else {
+                drawer.trainer.import_into_X(epoch.X[0]);
+                setTimeout(loop1, 50);
+            }
+
+        };
+        let epoch_cursor = dataset.get_ordered_cursor();
+        loop1();
+    }
+}
+
+class Center extends BtnBase {
+    constructor() {
+        super('Center', 'center');
+    }
+
+    onclick() {
+        dataset.center_dataset();
+        super.onclick();
+    }
+}
+
+class Augment extends BtnBase {
+    constructor() {
+        super('Augment', 'augment');
+    }
+
+    onclick() {
+        dataset.augment();
+        super.onclick();
+    }
+}
+
+class Clean extends BtnBase {
+    constructor() {
+        super('Clean', 'clean');
+    }
+
+    onclick() {
+        dataset.clean_duplicates();
+        super.onclick();
+    }
+}
+
+class Download extends BtnBase {
+    constructor() {
+        super('Download', 'Download');
+    }
+
+    onclick() {
+        dataset.download();
+        super.onclick();
+    }
+}
+
+class Limit extends BtnBase {
+    constructor() {
+        super('Limit', 'limit');
+    }
+
+    onclick() {
+        dataset.limit();// todo give  number of lines to limit
+        super.onclick();
+    }
+}
+
+class StopAll extends BtnBase {
+    constructor(onstop) {
+        super("Stop All", "stop-all");
+        this.onstop = onstop;
+    }
+
+    onclick() {
+        this.onstop();
+    }
+}
+
+class DatasetOperations extends BtnBase {
+    constructor() {
+        super("Dataset Operations", "dataset-operations");
+    }
+
+    onclick() {
+        pages.addPage(new Page("db-operations", [new Load(), new NewDataset()]));
+        pages.nextPage();
+        super.onclick();
+    }
+}
+
+const pages = new Pages(new Page("root", [new DatasetOperations()]));
+pages.show();
+
+
+function stats() {
+    console.log("stats");
+    let stat = {
+        num_len: {},
+        total_len: 0,
+    };
+    for (let key in dataset.dataset) {
+        stat.num_len[key] = dataset.dataset[key].length;
+        stat.total_len += dataset.dataset[key].length;
+    }
+
+    div_stats.innerHTML = "";
+    div_stats.innerHTML = "<b>Campioni per ciascun numero:</b><br/>";
+    for (let key in stat.num_len) {
+        div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
+    }
+    div_stats.innerHTML += "<b>Numero totale di campioni: </b>" + stat.total_len + "<br/>";
+}
+
+function MergeDataset() {
     let btn1 = document.createElement('button');
     btn_group.appendChild(btn1);
 
@@ -330,7 +415,7 @@ export function MergeDataset() {
     };
 }
 
-export function ApproveDataset() {
+function ApproveDataset() {
     let btn1 = document.createElement('button');
     let btn2 = document.createElement('button');
     let d;
@@ -405,7 +490,7 @@ export function ApproveDataset() {
     };
 }
 
-export function TestFeature() { // TODO just for dev purpose
+function TestFeature() { // TODO just for dev purpose
 
     let ds = new Dataset();
 
@@ -447,7 +532,7 @@ export function TestFeature() { // TODO just for dev purpose
     };
 }
 
-export function Loader_n_Trainer() {
+function Loader_n_Trainer() {
     let dataset = new Dataset;
     let nn = drawer.trainer.nn;
     let e = 0, x = 1;
