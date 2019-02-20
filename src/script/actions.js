@@ -13,63 +13,136 @@ drawer.disable();
 document.getElementById('canvas-header').hidden = true;
 
 export function DatasetOperations() {
-    let dataset = new Dataset();
-
-    const btns = [];
+    const dataset = new Dataset();
     const div_stats = document.createElement('div');
     msg_list.parentNode.appendChild(div_stats);
 
-    btns["load dataset"] = document.createElement("button");
-    btn_group.appendChild(btns["load dataset"]);
-    btns["load dataset"].hidden = false;
-    btns["load dataset"].disabled = false;
-    btns["load dataset"].className = "btn btn-outline-primary";
-    btns["load dataset"].innerText = "Load Dataset";
-    Trainer.load_file_check(btns["load dataset"]).then(parsed_content => {
-        dataset.import_dataset(parsed_content);
-        new Show();
-        new Empty();
-        new Clean();
-        new Augment();
-        new Center();
-        new Download();
-        stats();
-    });
+    class Page {
+        constructor(array) {
+            this.pages = [];
+            if (array.constructor === Array)
+                array.forEach( el => this.pages.push(el));
+        }
 
-    // todo button for load file
+        add(el) {
+            this.pages.push(el);
+        }
+
+        createAll() {
+            this.pages.forEach(el => el.create());
+        }
+
+        removeAll() {
+            this.pages.forEach(el=>el.remove());
+        }
+    }
 
     class Base {
-        constructor(nome, id = nome) {
-            this.btn = document.createElement('button');
-            this.btn.innerText = nome;
-            this.btn.id = id;
-            this.btn.className = "btn btn-primary";
-            this.btn.onclick = this.onclick;
-            btn_group.appendChild(this.btn);
+        constructor(name, id) {
+            if (!name || !id) {
+                throw Error("Name and/or id not given!");
+            }
+            this.name = name;
+            this.id = id;
+            this.btn = document.getElementById(id);
+            this.keep = true;
+        }
+
+        create() {
+            if (!this.btn) {
+                this.btn = document.createElement('button');
+                this.btn.innerText = this.name;
+                this.btn.id = this.id;
+                this.btn.className = "btn btn-primary";
+                this.btn.onclick = this.onclick;
+                btn_group.appendChild(this.btn);
+            }
         }
 
         onclick() {
             stats();
         }
+
+        remove() {
+            btn_group.removeChild(this.btn);
+            this.btn = null;
+        }
+
+        stop() {
+            this.keep = false;
+        }
     }
 
-    let stats = () => {
-        div_stats.innerHTML = "";
-        let stat = {
-            num_len: {},
-            total_len: 0,
-        };
-        for (let key in dataset.dataset) {
-            stat.num_len[key] = dataset.dataset[key].length;
-            stat.total_len += dataset.dataset[key].length;
+    class Load extends Base {
+        constructor() {
+            super("Load Dataset", "load");
+            Trainer.load_file_check(this.btn).then(parsed_content => {
+                dataset.import_dataset(parsed_content);
+                new Show();
+                new Empty();
+                new Clean();
+                new Augment();
+                new Center();
+                new Limit();
+                new Download();
+                new NewDataset().remove();
+                stats();
+                this.remove();
+            });
+        }
+    }
+
+    class NewDataset extends Base {
+        constructor() {
+            super("New Dataset", "new-dataset");
         }
 
-        div_stats.innerHTML = "<b>Campioni per ciascun numero:</b><br/>";
-        for (let key in stat.num_len) {
-            div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
+        onclick() {
+            this.remove();
+            new Download();
+
+            document.getElementById('canvas-header').hidden = false;
+            drawer.updateCanvasSize();
+
+            let Y = Trainer.get_train_Y();
+            let i = 0;
+
+            drawer.removeAllListeners("drawing");
+            drawer.removeAllListeners("timer progress");
+            drawer.removeAllListeners("timer end");
+
+            drawer.on("drawing", () => drawer.reset_timer());
+            drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
+            drawer.on("timer end", () => {
+                step_2();
+                drawer.update_progress_timer(0);
+            });
+
+            let step_1 = () => {
+                if (i > Y.length - 1) {
+                    i = 0;
+                }
+                drawer.trainer.reset();
+                msg_y.innerText = Y[i];
+                drawer.enable();
+            };
+
+            let step_2 = () => {
+                drawer.disable();
+                dataset.add(Y[i], drawer.trainer.X);
+                i++;
+                stats();
+                step_1();
+            };
+
+            step_1();
         }
-        div_stats.innerHTML += "<b>Numero totale di campioni: </b>" + stat.total_len + "<br/>";
-    };
+
+        remove() {
+            page1.forEach(value => value.remove());
+            super.remove();
+        }
+    }
 
     class Empty extends Base {
         constructor() {
@@ -79,11 +152,6 @@ export function DatasetOperations() {
         onclick() {
             dataset.empty();
             super.onclick();
-        }
-
-        start() {
-            dataset.empty();
-            stats();
         }
     }
 
@@ -178,63 +246,41 @@ export function DatasetOperations() {
         }
     }
 
+    class StopAll extends Base {
+        constructor() {
+            super("Stop All", "stop-all");
+        }
+
+        onclick() {
+
+            super.onclick();
+        }
+    }
+
+    function stats() {
+        let stat = {
+            num_len: {},
+            total_len: 0,
+        };
+        for (let key in dataset.dataset) {
+            stat.num_len[key] = dataset.dataset[key].length;
+            stat.total_len += dataset.dataset[key].length;
+        }
+
+        div_stats.innerHTML = "";
+        div_stats.innerHTML = "<b>Campioni per ciascun numero:</b><br/>";
+        for (let key in stat.num_len) {
+            div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
+        }
+        div_stats.innerHTML += "<b>Numero totale di campioni: </b>" + stat.total_len + "<br/>";
+    }
+
     this.start = () => {
         delete this.start;
     };
-}
 
-export function NewDataset() {
-    document.getElementById('canvas-header').hidden = false;
-    drawer.updateCanvasSize();
-    let btn1 = document.createElement("button");
-    btn_group.appendChild(btn1);
-
-    let ds = new Dataset();
-
-    let Y = Trainer.get_train_Y();
-    let i = 0;
-
-    drawer.removeAllListeners("drawing");
-    drawer.removeAllListeners("timer progress");
-    drawer.removeAllListeners("timer end");
-
-    drawer.on("drawing", () => drawer.reset_timer());
-    drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
-    drawer.on("timer end", () => {
-        step_2();
-        drawer.update_progress_timer(0);
-    });
-
-    this.start = () => {
-        step_0()
-    };
-
-    let step_0 = () => {
-        btn1.hidden = false;
-        btn1.disabled = false;
-        btn1.className = "btn btn-outline-primary";
-        btn1.innerText = "Download Dataset";
-        btn1.onclick = () => {
-            ds.download();
-        };
-        step_1()
-    };
-
-    let step_1 = () => {
-        if (i > Y.length - 1) {
-            i = 0;
-        }
-        drawer.trainer.reset();
-        msg_y.innerText = Y[i];
-        drawer.enable();
-    };
-
-    let step_2 = () => {
-        drawer.disable();
-        ds.add(Y[i], drawer.trainer.X);
-        i++;
-        step_1();
-    };
+    const Page1 = new Page([new Load(), new NewDataset()]);
+    Page1.createAll();
 }
 
 export function MergeDataset() {
