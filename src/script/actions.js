@@ -20,18 +20,17 @@ class Pages {
     constructor(root_page) {
         this.pages = [root_page];
         this.actual_page = 0;
+        this.btn_back = new Base("<- Back", 'back');
     }
 
     show() {
         // this.pagesTree();
         if (this.pages.length !== 0) {
             if (this.actual_page !== 0) {
-                let back = new BtnBase("<- Back", "back");
 
-                back.create();
-                back.show_stats = false;
-                back.btn.className = "btn btn-warning";
-                back.btn.onclick = this.backPage.bind(this);
+                this.btn_back.create();
+                this.btn_back.btn.className = "btn btn-warning";
+                this.btn_back.btn.onclick = this.backPage.bind(this);
             }
         }
         this.pages[this.actual_page].createAll();
@@ -58,7 +57,7 @@ class Pages {
         console.log(this.actual_page);
         if (this.actual_page - 1 < 0)
             return;
-        new BtnBase("Back", "back").remove();
+        this.btn_back.remove();
         this.pages[this.actual_page].removeAll();
         this.pages.pop();
         this.actual_page--;
@@ -97,13 +96,12 @@ class Page {
 
     removeAll() {
         this.elements.forEach(el => el.remove());
-        div_stats.innerText = "";
         if (this.onremove)
             this.onremove();
     }
 }
 
-class BtnBase {
+class Base {
     constructor(name, id) {
         if (!name || !id) {
             throw Error("Name and/or id not given!");
@@ -111,8 +109,6 @@ class BtnBase {
         this.name = name;
         this.id = id;
         this.btn = document.getElementById(id);
-        this.show_stats = true;
-        this.keep = true;
     }
 
     create() {
@@ -127,7 +123,7 @@ class BtnBase {
     }
 
     onclick() {
-        stats();
+
     }
 
     remove() {
@@ -136,9 +132,21 @@ class BtnBase {
         btn_group.removeChild(this.btn);
         this.btn = null;
     }
+}
 
-    stop() {
-        this.keep = false;
+class BtnBase extends Base {
+    constructor(name, id) {
+        super(name, id);
+        this.keep = true;
+    }
+
+    onclick() {
+        stats();
+        super.onclick();
+    }
+
+    remove() {
+        super.remove();
     }
 }
 
@@ -206,11 +214,6 @@ class NewDataset extends BtnBase {
 
         step_1();
     }
-
-    remove() {
-        //page1.forEach(value => value.remove());
-        super.remove();
-    }
 }
 
 class Empty extends BtnBase {
@@ -227,14 +230,22 @@ class Empty extends BtnBase {
 class Show extends BtnBase {
     constructor() {
         super("Show", "show");
-        console.log(this.keep);
     }
 
     onclick() {
-        pages.addPage(new Page("StopShow", [new Stop(()=>{this.keep = false})]));
+        stats();
+        this.keep = true;
+        pages.addPage(
+            new Page("StopShow", [
+                new Stop(() => {
+                        this.keep = false;
+                        drawer.trainer.reset();
+                    }
+                )
+            ])
+        );
         pages.nextPage();
         let loop1 = () => {
-            console.log(this);
             if (!this.keep)
                 return;
             let epoch = epoch_cursor.fetch();
@@ -351,7 +362,45 @@ class DatasetOperations extends BtnBase {
     }
 }
 
-const pages = new Pages(new Page("root", [new DatasetOperations()]));
+class TestFeatures extends BtnBase {
+    constructor() {
+        super("Development", 'dev-btn');
+    }
+
+    onclick() {
+        drawer.removeAllListeners("drawing");
+        drawer.removeAllListeners("timer progress");
+        drawer.removeAllListeners("timer end");
+
+        drawer.on("timer end", () => {
+            step_1();
+            drawer.update_progress_timer(0);
+        });
+
+        let step_0 = () => {
+            drawer.trainer.reset();
+            drawer.enable();
+        };
+
+        let step_1 = () => {
+            drawer.disable();
+            dataset.add(0, drawer.trainer.X);
+            dataset.center_dataset();
+            dataset.stretch_dataset();
+            setTimeout(step_2, 250);
+        };
+
+        let step_2 = () => {
+            drawer.trainer.import_into_X(dataset.dataset[0][0]);
+        };
+
+        step_0();
+
+        super.onclick();
+    }
+}
+
+const pages = new Pages(new Page("root", [new DatasetOperations(), new TestFeatures()]));
 pages.show();
 
 
@@ -493,48 +542,6 @@ function ApproveDataset() {
         }
 
         loop();
-    };
-}
-
-function TestFeature() { // TODO just for dev purpose
-
-    let ds = new Dataset();
-
-    document.getElementById('canvas-header').hidden = true;
-    drawer.removeAllListeners("drawing");
-    drawer.removeAllListeners("timer progress");
-    drawer.removeAllListeners("timer end");
-
-    drawer.on("drawing", () => drawer.reset_timer());
-    drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
-    drawer.on("timer end", () => {
-        step_1();
-        drawer.update_progress_timer(0);
-    });
-
-    this.start = () => {
-        step_0();
-    };
-
-    // start drawing
-    let step_0 = () => {
-        //console.log("step_0");
-        drawer.trainer.reset();
-        drawer.enable();
-    };
-    // ended drawing: pooling
-    let step_1 = () => {
-        //console.log("step_1");
-        drawer.disable();
-        ds.add(0, drawer.trainer.X);
-        ds.center_dataset();
-        ds.stretch_dataset();
-        setTimeout(step_2, 250);
-    };
-    // test and output
-    let step_2 = () => {
-        drawer.trainer.import_into_X(ds.dataset[0][0]);
-        //step_0();
     };
 }
 
