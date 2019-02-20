@@ -231,7 +231,8 @@ class Show extends BtnBase {
     }
 
     onclick() {
-        pages.addPage(new Page("StopShow", [new StopAll(()=>{this.keep = false})]));
+        pages.addPage(new Page("StopShow", [new Stop(()=>{this.keep = false})]));
+        pages.nextPage();
         let loop1 = () => {
             console.log(this);
             if (!this.keep)
@@ -322,10 +323,15 @@ class Limit extends BtnBase {
     }
 }
 
-class StopAll extends BtnBase {
+class Stop extends BtnBase {
     constructor(onstop) {
-        super("Stop All", "stop-all");
+        super("Stop", "stop-all");
         this.onstop = onstop;
+    }
+
+    create() {
+        super.create();
+        this.btn.className = "btn btn-danger";
     }
 
     onclick() {
