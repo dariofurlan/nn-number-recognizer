@@ -76,7 +76,6 @@ class Drawer extends EventEmitter {
         this.loading_overlay = new LoadingOverlay();
         this.canvas = document.getElementById('canvas');
         this.parent = document.getElementById('half-left');
-        this.timer_progress_bar = document.getElementById('timer');
         this.ctx = this.canvas.getContext("2d");
         this.timer = new Timer();
         this.init_events();
@@ -213,7 +212,7 @@ class Drawer extends EventEmitter {
 
     update_progress_timer(percent) {
         percent = Math.round(percent);
-        this.timer_progress_bar.style.width = percent + "%";
+
     }
 
     redraw() {

@@ -185,14 +185,11 @@ class NewDataset extends BtnBase {
         let i = 0;
 
         drawer.removeAllListeners("drawing");
-        drawer.removeAllListeners("timer progress");
         drawer.removeAllListeners("timer end");
 
         drawer.on("drawing", () => drawer.reset_timer());
-        drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
         drawer.on("timer end", () => {
             step_2();
-            drawer.update_progress_timer(0);
         });
 
         let step_1 = () => {
@@ -369,12 +366,11 @@ class TestFeatures extends BtnBase {
 
     onclick() {
         drawer.removeAllListeners("drawing");
-        drawer.removeAllListeners("timer progress");
         drawer.removeAllListeners("timer end");
 
+        drawer.on("drawing", () => drawer.reset_timer());
         drawer.on("timer end", () => {
             step_1();
-            drawer.update_progress_timer(0);
         });
 
         let step_0 = () => {
@@ -391,10 +387,20 @@ class TestFeatures extends BtnBase {
         };
 
         let step_2 = () => {
-            drawer.trainer.import_into_X(dataset.dataset[0][0]);
+            drawer.trainer.import_into_X(dataset.dataset[0][dataset.dataset[0].length-1]);
         };
 
         step_0();
+
+        let tmp = new Stop(step_0);
+        tmp.name = "Retry";
+        pages.addPage(
+            new Page("Develpment Page", [
+                    tmp
+                ]
+            )
+        );
+        pages.nextPage();
 
         super.onclick();
     }
@@ -416,6 +422,8 @@ function stats() {
     }
 
     div_stats.innerHTML = "";
+    if (stat.total_len === 0)
+        return;
     div_stats.innerHTML = "<b>Campioni per ciascun numero:</b><br/>";
     for (let key in stat.num_len) {
         div_stats.innerHTML += key + ": " + stat.num_len[key] + "<br/>";
@@ -477,12 +485,9 @@ function ApproveDataset() {
 
     btn_group.appendChild(btn1);
 
-    drawer.removeAllListeners("timer progress");
     drawer.removeAllListeners("timer end");
 
-    drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
     drawer.on("timer end", () => {
-        drawer.update_progress_timer(0);
     });
     drawer.disable();
     document.getElementById('canvas-header').hidden = true;
@@ -753,10 +758,8 @@ function Loader_n_Trainer() {
 
     // test
     drawer.on("drawing", () => drawer.reset_timer());
-    drawer.on("timer_progress", (percent) => drawer.update_progress_timer(percent));
     drawer.on("timer end", () => {
         step_2();
-        drawer.update_progress_timer(0);
     });
 
     let step_1 = () => {
