@@ -150,9 +150,9 @@ class BtnBase extends Base {
     }
 }
 
-class Load extends BtnBase {
+class LoadLocal extends BtnBase {
     constructor() {
-        super("Load Dataset", "load");
+        super("Load Local Dataset", "load");
     }
 
     create() {
@@ -160,7 +160,7 @@ class Load extends BtnBase {
         Trainer.load_file_check(this.btn).then(parsed_content => {
             dataset.empty();
             dataset.import_dataset(parsed_content);
-            pages.addPage(new Page("LoadedFile", [new Show(), new Empty(), new Clean(), new Augment(), new Center(), new Limit(), new Download()]));
+            pages.addPage(new Page("LoadedFile", [new Show(), new Empty(), new Clean(), new Augment(), new Center(), new Fit(), new Limit(), new Download(), new Train()]));
             pages.nextPage();
             stats();
         });
@@ -213,6 +213,23 @@ class NewDataset extends BtnBase {
     }
 }
 
+class LoadRemote extends BtnBase {
+    constructor() {
+        super("Load Remote Dataset (from the repo)", "remote-load");
+    }
+
+    onclick() {
+        Trainer.remote_load().then(parsed => {
+            dataset.empty();
+            dataset.import_dataset(parsed);
+            pages.addPage(new Page("LoadedFile", [new Show(), new Empty(), new Clean(), new Augment(), new Center(), new Fit(), new Limit(), new Download(), new Train()]));
+            pages.nextPage();
+            stats();
+        }).catch(reason => console.error(reason));
+        super.onclick();
+    }
+}
+
 class Empty extends BtnBase {
     constructor() {
         super("Empty", "empty");
@@ -249,7 +266,6 @@ class Show extends BtnBase {
             if (!epoch)
                 return;
 
-            console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
             if (epoch.length > 1) {
                 let i = 0;
                 let loop2 = () => {
@@ -267,6 +283,7 @@ class Show extends BtnBase {
                 loop2();
             } else {
                 drawer.trainer.import_into_X(epoch.X[0]);
+                drawer.trainer.avg_pooling();
                 setTimeout(loop1, 50);
             }
 
@@ -283,6 +300,18 @@ class Center extends BtnBase {
 
     onclick() {
         dataset.center_dataset();
+        super.onclick();
+    }
+}
+
+class Fit extends BtnBase {
+    constructor() {
+        super("Zoom Fit (and Center)", "fit");
+    }
+
+    onclick() {
+        dataset.center_dataset();
+        dataset.fit_dataset();
         super.onclick();
     }
 }
@@ -326,7 +355,7 @@ class Limit extends BtnBase {
     }
 
     onclick() {
-        dataset.limit();// todo give  number of lines to limit
+        dataset.limit(100);// todo give  number of lines to limit
         super.onclick();
     }
 }
@@ -347,13 +376,248 @@ class Stop extends BtnBase {
     }
 }
 
+class Train extends BtnBase {
+    constructor() {
+        super("Train", "train");
+    }
+
+    onclick() {
+        let nn = drawer.trainer.nn;
+        let e = 0, x = 1;
+
+        // train
+        let prepare = () => {
+            let tracesW1 = [];
+            let tracesW2 = [];
+            /*nn.W1.map((row, i) => {
+                row.map((weight, ii) => {
+                    let trace = {
+                        y:[weight],
+                        x:[0],
+                        name: 'W'+(i+1)+'-'+(ii+1),
+                        mode: 'line'
+                    };
+                    tracesW1.push(trace);
+                });
+            });*/
+            /*nn.W2.map((row, i) => {
+                row.map((weight, ii) => {
+                    let trace = {
+                        y:[weight],
+                        x:[0],
+                        name: 'W'+(i+1)+'-'+(ii+1),
+                        type:'line'
+                    };
+                    tracesW2.push(trace);
+                });
+            });*/
+            /*let error_trace = [];
+            for (let i = 0; i < nn.outputLayerSize; i++) {
+                error_trace.push({
+                    y: [],
+                    x: [],
+                    name: "Error - " + i,
+                    type: 'line',
+                    line: {
+                        width: 1
+                    }
+                });
+            }*/
+            let error_trace = [{
+                y: [],
+                x: [],
+                name: "Error",
+                type: 'line',
+                line: {
+                    width: 1
+                }
+            }];
+            // Plotly.newPlot('graph-W1', tracesW1, {title:"Weights Input->Hidden"}, {responsive:true});
+            // Plotly.newPlot('graph-W2', tracesW2, {title:"Weights Hidden->Output"}, {responsive:true});
+            Plotly.newPlot('graph-error', error_trace, {title: "Avg Error"}, {responsive: true});
+            step_0();
+        };
+
+        let step_0 = () => {
+            let train_step = (X, Y) => {
+                drawer.trainer.import_into_X(X);
+                drawer.trainer.avg_pooling();
+
+                let out = nn.train([drawer.trainer.X], [Y]);
+                let ext = {
+                    y: [],
+                    x: []
+                };
+                let n = [];
+                x++;
+                /*nn.W1.map((row) => {
+                    row.map((weight) => {
+                        ext.y.push([weight]);
+                        ext.x.push([x]);
+                        n.push(n.length);
+                    });
+                });*/
+                let ext2 = {
+                    y: [],
+                    x: []
+                };
+                let n2 = [];
+                /*nn.W2.map((row) => {
+                    row.map((weight) => {
+                        ext2.y.push([weight]);
+                        ext2.x.push([x]);
+                        n2.push(n2.length);
+                    });
+                });*/
+
+                /*let ext_error = {
+                    y:[],
+                    x:[]
+                };
+                let ne = [];
+                for (let i=0; i<nn.outputLayerSize;i++) {
+                    ext_error.y.push([out.error[0][i]]);
+                    ext_error.x.push([e]);
+                    ne.push(ne.length);
+                }*/
+                const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
+                let ext_error = {
+                    y: [[average(out.error[0])]],
+                    x: [[e]]
+                };
+                let ne = [0];
+                //Plotly.extendTraces('graph-W1', ext, n);
+                //Plotly.extendTraces('graph-W2', ext2, n2);
+                Plotly.extendTraces('graph-error', ext_error, ne);
+                e++;
+                x++;
+
+                let prediction = out.prediction[0];
+                let error = out.error;
+
+
+                let pred = [];
+                for (let i = 0; i < prediction.length; i++) {
+                    pred[i] = {
+                        number: i,
+                        accuracy: prediction[i]
+                    };
+                }
+
+                // sort the other array
+                for (let i = 0; i < pred.length - 1; i++) {
+                    for (let j = i + 1; j < pred.length; j++) {
+                        if (pred[i].accuracy < pred[j].accuracy) {
+                            let s = pred[i];
+                            pred[i] = pred[j];
+                            pred[j] = s;
+                        }
+                    }
+                }
+
+                console.info("prediction: " + JSON.stringify(pred));
+                console.info("error: " + JSON.stringify(error));
+                console.log();
+            };
+            let ab = () => {
+                let epoch = epoch_cursor.fetch();
+                if (!epoch) {
+                    step_1();
+                    return;
+                }
+                // console.clear(); // todo check if is needed
+                console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
+                if (epoch.length > 1) {
+                    let i = 0;
+                    let ac = () => {
+                        if (i < epoch.length) {
+                            train_step(epoch.X[i], epoch.Y[i]);
+                            i++
+                        } else {
+                            setTimeout(ab, 500);
+                            return;
+                        }
+                        setTimeout(ac, 50);
+                    };
+                    ac();
+                } else {
+                    train_step(epoch.X[0], epoch.Y[0]);
+                    setTimeout(ab, 25);
+                }
+            };
+            let epoch_cursor = dataset.get_random_cursor();
+            ab();
+
+            /*let dt = drawer.trainer.dataset;
+            /!*Object.keys(dataset).map(function(num_key, j){
+                let nums = dataset[num_key];
+                nums.map(function(value, i) {
+                    let X = nums[i];
+                });
+            });*!/
+            for (let key in dt.dataset) {
+                for (let i = 0; i < dt.dataset[key].length; i++) {
+                    drawer.trainer.import_into_X(dt.dataset[key][i]);
+                    drawer.trainer.update();
+                    drawer.trainer.max_pooling();
+                    let {pred, error} = drawer.trainer.train(key);
+                    //error = Math.round(error * 1000000) / 10000;
+                    msg_list.innerHTML = "";
+                    for (let i = 0; i < pred.length; i++) {
+                        let acc = Math.round(pred[i].accuracy * 1000000) / 10000;
+                        msg_list.innerHTML += pred[i].number + ") " + acc + "<br/>";
+                    }
+                    let acc = Math.round(pred[0].accuracy * 10000) / 100;
+                    let best_pred = pred[0].number;
+                    msg_list.innerHTML = "al <b>" + acc + "</b>% il numero disegnato è: <b>" + best_pred + "</b>";
+                    msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
+                    console.log("k:" + key + ":" + error);
+                }
+            }
+            step_1();*/
+        };
+
+        // test
+        drawer.on("drawing", () => drawer.reset_timer());
+        drawer.on("timer end", () => {
+            step_2();
+        });
+
+        let step_1 = () => {
+            drawer.trainer.reset();
+            drawer.enable();
+        };
+        let step_2 = () => {
+            drawer.disable();
+            dataset._center(drawer.trainer.X);
+            dataset._fit(drawer.trainer.X);
+            drawer.trainer.update();
+            setTimeout(step_3, 500)
+        };
+        let step_3 = () => {
+            drawer.trainer.max_pooling();
+            let pred = drawer.trainer.test();
+            msg_list.innerText = JSON.stringify(pred);
+            console.log(pred);
+            step_1();
+        };
+
+        prepare();
+    }
+
+    create() {
+        super.create();
+        this.btn.className = "btn btn-success";
+    }
+}
+
 class DatasetOperations extends BtnBase {
     constructor() {
         super("Dataset Operations", "dataset-operations");
     }
 
     onclick() {
-        pages.addPage(new Page("db-operations", [new Load(), new NewDataset()]));
+        pages.addPage(new Page("db-operations", [new LoadLocal(), new NewDataset(), new LoadRemote()]));
         pages.nextPage();
         super.onclick();
     }
@@ -380,23 +644,24 @@ class TestFeatures extends BtnBase {
 
         let step_1 = () => {
             drawer.disable();
+            dataset.empty();
             dataset.add(0, drawer.trainer.X);
             dataset.center_dataset();
-            dataset.stretch_dataset();
+            dataset.fit_dataset();
             setTimeout(step_2, 250);
         };
 
         let step_2 = () => {
-            drawer.trainer.import_into_X(dataset.dataset[0][dataset.dataset[0].length-1]);
+            drawer.trainer.import_into_X(dataset.dataset[0][dataset.dataset[0].length - 1]);
         };
 
         step_0();
 
-        let tmp = new Stop(step_0);
-        tmp.name = "Retry";
+        let stop = new Stop(step_0);
+        stop.name = "Retry";
         pages.addPage(
             new Page("Develpment Page", [
-                    tmp
+                    stop
                 ]
             )
         );
@@ -408,7 +673,6 @@ class TestFeatures extends BtnBase {
 
 const pages = new Pages(new Page("root", [new DatasetOperations(), new TestFeatures()]));
 pages.show();
-
 
 function stats() {
     console.log("stats");
@@ -469,7 +733,6 @@ function MergeDataset() {
             drawer.trainer.dataset.import_dataset(file1);
             drawer.trainer.dataset.import_dataset(file2);
             console.log("merged");
-            drawer.trainer.dataset.clean_duplicates();
             drawer.trainer.dataset.download();
         } else {
             console.log(file1);
@@ -547,232 +810,5 @@ function ApproveDataset() {
         }
 
         loop();
-    };
-}
-
-function Loader_n_Trainer() {
-    let dataset = new Dataset;
-    let nn = drawer.trainer.nn;
-    let e = 0, x = 1;
-
-    this.start = () => {
-        Trainer.remote_load().then(parsed => {
-            dataset.import_dataset(parsed);
-            console.info("Browser may slow down: Augmenting...");
-            dataset.augment();
-            dataset.limit(100);
-            prepare();
-        }).catch(reason => console.error(reason));
-    };
-    // train
-    let prepare = () => {
-        let tracesW1 = [];
-        let tracesW2 = [];
-        /*nn.W1.map((row, i) => {
-            row.map((weight, ii) => {
-                let trace = {
-                    y:[weight],
-                    x:[0],
-                    name: 'W'+(i+1)+'-'+(ii+1),
-                    mode: 'line'
-                };
-                tracesW1.push(trace);
-            });
-        });*/
-        /*nn.W2.map((row, i) => {
-            row.map((weight, ii) => {
-                let trace = {
-                    y:[weight],
-                    x:[0],
-                    name: 'W'+(i+1)+'-'+(ii+1),
-                    type:'line'
-                };
-                tracesW2.push(trace);
-            });
-        });*/
-        /*let error_trace = [];
-        for (let i = 0; i < nn.outputLayerSize; i++) {
-            error_trace.push({
-                y: [],
-                x: [],
-                name: "Error - " + i,
-                type: 'line',
-                line: {
-                    width: 1
-                }
-            });
-        }*/
-        let error_trace = [{
-            y: [],
-            x: [],
-            name: "Error",
-            type: 'line',
-            line: {
-                width: 1
-            }
-        }];
-        // Plotly.newPlot('graph-W1', tracesW1, {title:"Weights Input->Hidden"}, {responsive:true});
-        // Plotly.newPlot('graph-W2', tracesW2, {title:"Weights Hidden->Output"}, {responsive:true});
-        Plotly.newPlot('graph-error', error_trace, {title: "Avg Error"}, {responsive: true});
-        step_0();
-    };
-
-    let step_0 = () => {
-        let train_step = (X, Y) => {
-            drawer.trainer.import_into_X(X);
-            drawer.trainer.max_pooling();
-
-            let out = nn.train([drawer.trainer.X], [Y]);
-            let ext = {
-                y: [],
-                x: []
-            };
-            let n = [];
-            x++;
-            /*nn.W1.map((row) => {
-                row.map((weight) => {
-                    ext.y.push([weight]);
-                    ext.x.push([x]);
-                    n.push(n.length);
-                });
-            });*/
-            let ext2 = {
-                y: [],
-                x: []
-            };
-            let n2 = [];
-            /*nn.W2.map((row) => {
-                row.map((weight) => {
-                    ext2.y.push([weight]);
-                    ext2.x.push([x]);
-                    n2.push(n2.length);
-                });
-            });*/
-
-            /*let ext_error = {
-                y:[],
-                x:[]
-            };
-            let ne = [];
-            for (let i=0; i<nn.outputLayerSize;i++) {
-                ext_error.y.push([out.error[0][i]]);
-                ext_error.x.push([e]);
-                ne.push(ne.length);
-            }*/
-            const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
-            let ext_error = {
-                y: [[average(out.error[0])]],
-                x: [[e]]
-            };
-            let ne = [0];
-            //Plotly.extendTraces('graph-W1', ext, n);
-            //Plotly.extendTraces('graph-W2', ext2, n2);
-            Plotly.extendTraces('graph-error', ext_error, ne);
-            e++;
-            x++;
-
-            let prediction = out.prediction[0];
-            let error = out.error;
-
-
-            let pred = [];
-            for (let i = 0; i < prediction.length; i++) {
-                pred[i] = {
-                    number: i,
-                    accuracy: prediction[i]
-                };
-            }
-
-            // sort the other array
-            for (let i = 0; i < pred.length - 1; i++) {
-                for (let j = i + 1; j < pred.length; j++) {
-                    if (pred[i].accuracy < pred[j].accuracy) {
-                        let s = pred[i];
-                        pred[i] = pred[j];
-                        pred[j] = s;
-                    }
-                }
-            }
-
-            console.info("prediction: " + JSON.stringify(pred));
-            console.info("error: " + JSON.stringify(error));
-            console.log();
-        };
-        let ab = () => {
-            let epoch = epoch_cursor.fetch();
-            if (!epoch) {
-                step_1();
-                return;
-            }
-            // console.clear(); // todo check if is needed
-            console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
-            if (epoch.length > 1) {
-                let i = 0;
-                let ac = () => {
-                    if (i < epoch.length) {
-                        train_step(epoch.X[i], epoch.Y[i]);
-                        i++
-                    } else {
-                        setTimeout(ab, 500);
-                        return;
-                    }
-                    setTimeout(ac, 50);
-                };
-                ac();
-            } else {
-                train_step(epoch.X[0], epoch.Y[0]);
-                setTimeout(ab, 50);
-            }
-        };
-        let epoch_cursor = dataset.get_random_cursor();
-        ab();
-
-        /*let dt = drawer.trainer.dataset;
-        /!*Object.keys(dataset).map(function(num_key, j){
-            let nums = dataset[num_key];
-            nums.map(function(value, i) {
-                let X = nums[i];
-            });
-        });*!/
-        for (let key in dt.dataset) {
-            for (let i = 0; i < dt.dataset[key].length; i++) {
-                drawer.trainer.import_into_X(dt.dataset[key][i]);
-                drawer.trainer.update();
-                drawer.trainer.max_pooling();
-                let {pred, error} = drawer.trainer.train(key);
-                //error = Math.round(error * 1000000) / 10000;
-                msg_list.innerHTML = "";
-                for (let i = 0; i < pred.length; i++) {
-                    let acc = Math.round(pred[i].accuracy * 1000000) / 10000;
-                    msg_list.innerHTML += pred[i].number + ") " + acc + "<br/>";
-                }
-                let acc = Math.round(pred[0].accuracy * 10000) / 100;
-                let best_pred = pred[0].number;
-                msg_list.innerHTML = "al <b>" + acc + "</b>% il numero disegnato è: <b>" + best_pred + "</b>";
-                msg_list.innerHTML += "<br/>Errore: <b>" + error + "</b>";
-                console.log("k:" + key + ":" + error);
-            }
-        }
-        step_1();*/
-    };
-
-    // test
-    drawer.on("drawing", () => drawer.reset_timer());
-    drawer.on("timer end", () => {
-        step_2();
-    });
-
-    let step_1 = () => {
-        drawer.trainer.reset();
-        drawer.enable();
-    };
-    let step_2 = () => {
-        drawer.disable();
-        drawer.trainer.max_pooling();
-        let pred = drawer.trainer.test();
-        msg_list.innerText = JSON.stringify(pred);
-        console.log(pred);
-        step_1();
-        //setTimeout(step_2, 250);
     };
 }

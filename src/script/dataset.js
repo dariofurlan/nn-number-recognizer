@@ -95,13 +95,18 @@ export default function Dataset() {
     };
     this._fit = (X) => { // todo use mipmap method
         let ns = Math.sqrt(X.length);
-        let {bounds} = calculate_figure_bounds(X, ns);
+        let X_copy = X.slice();
+        X.fill(0);
+        let {bounds} = calculate_figure_bounds(X_copy, ns);
         let width = bounds.x.max - bounds.x.min + 1;
         let height = bounds.y.max - bounds.y.min + 1;
-        let ratio = (width > height) ? ns / width : ns / height;
-        let new_width = Math.round(width * ratio);
-        let new_height = Math.round(height * ratio);
-        console.log("ratio: " + ratio + " w: " + new_width + " h: " + new_height);
+        //console.log(JSON.stringify(bounds));
+        //console.log("width: "+width+" height: "+height);
+        let mult_factor = (width > height) ? ns / width : ns / height;
+        let rounded_ratio = Math.round(mult_factor);
+        let new_width = Math.round(width * mult_factor);
+        let new_height = Math.round(height * mult_factor);
+
 
         let start_y = (ns - new_height) / 2;
         let start_x = (ns - new_width) / 2;
@@ -112,25 +117,22 @@ export default function Dataset() {
         end_y = Math.round(end_y);
         end_x = Math.round(end_x);
         // ratio = Math.round(ratio);
-
-        console.log("starty: " + start_y + " startx: " + start_x + " endy: " + end_y + " endx: " + end_x);
-        for (let y = bounds.y.min, slidey = start_y; y <= bounds.y.max; y++, slidey+=ratio) {
-            for (let x = bounds.x.min, slidex = start_x; x <= bounds.x.max; x++, slidex+=ratio) {
+        //console.log("ratio: " + mult_factor + " w: " + new_width + " h: " + new_height);
+        //console.log("starty: " + start_y + " startx: " + start_x + " endy: " + end_y + " endx: " + end_x);
+        for (let y = bounds.y.min, slidey = start_y; y <= bounds.y.max; y++, slidey+=mult_factor) {
+            for (let x = bounds.x.min, slidex = start_x; x <= bounds.x.max; x++, slidex+=mult_factor) {
                 let pos = (y * ns) + x;
-                if (X[pos] !== 0) {
-                    let val = X[pos];
-                    //X[pos] = 0;
-                    console.info(y + ":"+x);
-                    for (let yy = Math.round(slidey); yy < slidey + ratio && yy<end_y; yy++) {
-                        for (let xx = Math.round(slidex); xx < slidex + ratio && xx<end_x; xx++) {
-                            console.log(yy + "-" + xx);
+                if (X_copy[pos] !== 0) {
+                    let val = X_copy[pos];
+                    //console.info(y + ":"+x+ " slidex: "+slidex+" slidey: "+slidey);
+                    for (let yy = Math.floor(slidey); yy < slidey + mult_factor && yy<end_y; yy++) {
+                        for (let xx = Math.floor(slidex); xx < slidex + mult_factor && xx<end_x; xx++) {
+                            //console.log(yy + "-" + xx);
                             let pos2 = Math.round((yy * ns) + xx);
                             X[pos2] = val; // todo check that they don't collide
-
                         }
                     }
-
-                    console.log();
+                    //console.log();
                     //console.log(y + "-" + x);
                 }
             }
@@ -198,7 +200,7 @@ export default function Dataset() {
             }
         }
     };
-    this.stretch_dataset = () => {
+    this.fit_dataset = () => {
         let cursor = this.get_ordered_cursor();
         let epoch;
         while ((epoch = cursor.fetch())) {
