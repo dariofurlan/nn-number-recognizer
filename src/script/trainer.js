@@ -3,9 +3,9 @@ import NeuralNetwork from "./neural_network";
 import Dataset from './dataset';
 
 const INITIAL_SIZE = 32;
-const AFTER_POOL_SIZE = INITIAL_SIZE / 2;
+const AFTER_POOL_SIZE = INITIAL_SIZE / 4;
 const NUM_NUM = 10;
-const HIDDEN_LAYER_SIZE = 8;
+const HIDDEN_LAYER_SIZE = 12;
 const CONV_SIZE = 2;
 
 export default class Trainer extends EventEmitter {

@@ -284,6 +284,7 @@ class Show extends BtnBase {
             } else {
                 drawer.trainer.import_into_X(epoch.X[0]);
                 drawer.trainer.avg_pooling();
+                drawer.trainer.max_pooling();
                 setTimeout(loop1, 50);
             }
 
@@ -355,7 +356,7 @@ class Limit extends BtnBase {
     }
 
     onclick() {
-        dataset.limit(100);// todo give  number of lines to limit
+        dataset.limit(1000);// todo give  number of lines to limit
         super.onclick();
     }
 }
@@ -442,6 +443,7 @@ class Train extends BtnBase {
             let train_step = (X, Y) => {
                 drawer.trainer.import_into_X(X);
                 drawer.trainer.avg_pooling();
+                drawer.trainer.max_pooling();
 
                 let out = nn.train([drawer.trainer.X], [Y]);
                 let ext = {
@@ -515,14 +517,14 @@ class Train extends BtnBase {
                     }
                 }
 
-                console.info("prediction: " + JSON.stringify(pred));
-                console.info("error: " + JSON.stringify(error));
-                console.log();
+                //console.info("prediction: " + JSON.stringify(pred));
+                //console.info("error: " + JSON.stringify(error));
+                //console.log();
             };
             let ab = () => {
                 let epoch = epoch_cursor.fetch();
                 if (!epoch) {
-                    step_1();
+                    ab2();
                     return;
                 }
                 // console.clear(); // todo check if is needed
@@ -547,6 +549,38 @@ class Train extends BtnBase {
             };
             let epoch_cursor = dataset.get_random_cursor();
             ab();
+            let ab2 = () => {
+                epoch_cursor = dataset.get_random_cursor();
+
+                let ab2b = () => {
+                    let epoch = epoch_cursor.fetch();
+                    if (!epoch) {
+                        step_1();
+                        return;
+                    }
+                    // console.clear(); // todo check if is needed
+                    console.info("epoch: " + epoch_cursor.get_current_epoch() + " length: " + epoch.length);
+                    if (epoch.length > 1) {
+                        let i = 0;
+                        let ac = () => {
+                            if (i < epoch.length) {
+                                train_step(epoch.X[i], epoch.Y[i]);
+                                i++
+                            } else {
+                                setTimeout(ab2b, 500);
+                                return;
+                            }
+                            setTimeout(ac, 50);
+                        };
+                        ac();
+                    } else {
+                        train_step(epoch.X[0], epoch.Y[0]);
+                        setTimeout(ab2b, 25);
+                    }
+                };
+                ab2b();
+            };
+
 
             /*let dt = drawer.trainer.dataset;
             /!*Object.keys(dataset).map(function(num_key, j){
@@ -591,11 +625,12 @@ class Train extends BtnBase {
             drawer.disable();
             dataset._center(drawer.trainer.X);
             dataset._fit(drawer.trainer.X);
+            drawer.trainer.avg_pooling();
+            drawer.trainer.max_pooling();
             drawer.trainer.update();
             setTimeout(step_3, 500)
         };
         let step_3 = () => {
-            drawer.trainer.max_pooling();
             let pred = drawer.trainer.test();
             msg_list.innerText = JSON.stringify(pred);
             console.log(pred);
@@ -653,6 +688,8 @@ class TestFeatures extends BtnBase {
 
         let step_2 = () => {
             drawer.trainer.import_into_X(dataset.dataset[0][dataset.dataset[0].length - 1]);
+            drawer.trainer.avg_pooling();
+            drawer.trainer.max_pooling();
         };
 
         step_0();

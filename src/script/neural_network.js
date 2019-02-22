@@ -9,14 +9,14 @@ export default class NeuralNetwork {
         this.learning_rate = 5;
         this.W1 = math.randomInt([this.inputLayerSize, this.hiddenLayerSize]).map((row) => {
             return row.map(() => {
-                let sign = Math.random() < 0.5 ? -1 : 1;
+                let sign = Math.random() < 0.5 ? -2 : 2;
                 return Math.random()*2*sign;
             });
         });
         //console.log(this.W1);
         this.W2 = math.randomInt([this.hiddenLayerSize, this.outputLayerSize]).map((row) => {
             return row.map(() => {
-                let sign = Math.random() < 0.5 ? -1 : 1;
+                let sign = Math.random() < 0.5 ? -2 : 2;
                 return Math.random()*2*sign;
             });
         });
